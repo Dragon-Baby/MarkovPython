@@ -1,7 +1,5 @@
-import XMLHelper as XH
-from RuleNode import RuleNode
+from source import RuleNode
 import random as rd
-import sys
 
 class ParallelNode(RuleNode):
     def __init__(self):

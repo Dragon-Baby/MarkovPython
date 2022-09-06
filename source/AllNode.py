@@ -1,11 +1,9 @@
-import XMLHelper as XH
-from RuleNode import RuleNode
-from Field import Field
+from source import RuleNode
+# from RuleNode import RuleNode
+from source import Field
 import random as rd
-import sys
 import math
-import Helper as He
-
+from source import Helper as He
 
 
 class AllNode(RuleNode):

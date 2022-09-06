@@ -1,11 +1,8 @@
 import random as rd
-import sys
 import math
-
-import XMLHelper as XH
-from RuleNode import RuleNode
-from Observation import Observation
-from Field import Field
+from source import RuleNode
+from source import Observation
+from source import Field
 
 
 class OneNode(RuleNode):

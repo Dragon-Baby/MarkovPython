@@ -1,10 +1,10 @@
-import XMLHelper as XH
-from Node import Branch
+from source import XMLHelper as XH
+from source import Branch
 from abc import ABC, abstractmethod
 import math
 import random as rd
 import sys
-import Helper as He
+from source import Helper as He
 
 
 class WFCNode(Branch, ABC):

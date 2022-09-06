@@ -1,5 +1,5 @@
-import XMLHelper as XH
-from Node import Node
+from source import XMLHelper as XH
+from source import Node
 import random as rd
 import sys
 

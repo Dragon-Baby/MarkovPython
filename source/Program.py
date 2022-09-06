@@ -1,13 +1,13 @@
-import XMLHelper as XH
+from source import XMLHelper as XH
 import xml.etree.ElementTree as ET
 import os 
 import sys
 import pathlib
 import random as rd
-from Interpreter import Interpreter
+from source import Grid
+from source import Interpreter
 
-
-if __name__ == "__main__":
+def main():
     src_folder = pathlib.Path().resolve()
     # print(src_folder)
 
@@ -25,6 +25,7 @@ if __name__ == "__main__":
     palette = {}
     for e in palette_xml.getroot().findall("./color"):
         symbol = XH.GetValue(e, "symbol", "")
+        print(symbol)
         value = int(XH.GetValue(e, "value", ""), 16) + 255 << 24
         palette[symbol] = value
 

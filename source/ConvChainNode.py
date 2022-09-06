@@ -1,8 +1,8 @@
-import XMLHelper as XH
-from Node import Node
-import Graphics
-import Helper as He
-import SymmetryHelper as SH
+from source import XMLHelper as XH
+from source import Node
+from source import Graphics
+from source import Helper as He
+from source import SymmetryHelper as SH
 import random as rd
 import math
 

@@ -1,17 +1,14 @@
-from re import search
-from xmlrpc.client import FastMarshaller
-from Node import Node
-from Rule import Rule
-from Field import Field
-from Observation import Observation
-import Search
-from abc import ABC, abstractmethod
-import XMLHelper as XH
-import SymmetryHelper as SH
+from source import XMLHelper as XH
+from source import SymmetryHelper as SH
+from source import Node
 from AllNode import AllNode
+from source import Rule
+from source import Field
+from source import Observation
+from source import Search
 
 
-class RuleNode(Node, ABC):
+class RuleNode(Node):
     def __init__(self):
         super().__init__()
         self.rules = []
@@ -105,7 +102,6 @@ class RuleNode(Node, ABC):
             self.last[r] = False
 
     
-    @abstractmethod
     def Add(self, r, x, y, z, maskr):
         maskr[x + y * self.grid.MX + z * self.grid.MX * self.grid.MY] = True
 
@@ -129,7 +125,7 @@ class RuleNode(Node, ABC):
                 return False
             else:
                 self.future_computed = True
-                if search:
+                if self.search:
                     self.trajectory = []
                     TRIES = 1 if self.limit < 0 else 20
                     k = 0

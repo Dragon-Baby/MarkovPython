@@ -1,6 +1,6 @@
-from Node import Node
-import XMLHelper as XH
-import Helper as He
+from source import Node
+from source import XMLHelper as XH
+from source import Helper as He
 import random as rd
 import sys
 import math

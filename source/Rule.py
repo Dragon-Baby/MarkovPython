@@ -1,8 +1,8 @@
-import XMLHelper as XH
-import SymmetryHelper as SH 
-import Helper as He
-import Graphics as Gp
-import VoxHelper as VH
+from source import XMLHelper as XH
+from source import SymmetryHelper as SH 
+from source import Helper as He
+from source import Graphics as Gp
+from source import VoxHelper as VH
 
 
 class Rule():

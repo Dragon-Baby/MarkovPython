@@ -1,8 +1,8 @@
-import XMLHelper as XH
-from Node import Node, Branch
-from Rule import Rule
-from Grid import Grid
-import SymmetryHelper as SH
+from source import XMLHelper as XH
+from source import Branch
+from source import Rule
+from source import Grid
+from source import SymmetryHelper as SH
 
 class MapNode(Branch):
     def __init__(self):

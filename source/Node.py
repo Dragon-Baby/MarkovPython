@@ -1,37 +1,29 @@
-import XMLHelper as XH
-import xml.etree.ElementTree as ET
-from Grid import Grid
-from Interpreter import Interpreter
-from abc import ABC, abstractmethod
-import SymmetryHelper as SH
-from OneNode import OneNode
-from AllNode import AllNode
-from ParallelNode import ParallelNode
-from PathNode import PathNode
-from MapNode import MapNode
-from ConvolutionNode import ConvolutionNode
-from ConvChainNode import ConvChainNode
-from WFCNode import WFCNode
-from OverlapNode import OverlapNode
-from TileNode import TileNode
+from source import XMLHelper as XH
+from source import SymmetryHelper as SH
+from source import OneNode
+from source import AllNode
+from source import ParallelNode
+from source import PathNode
+from source import MapNode
+from source import ConvolutionNode
+from source import ConvChainNode
+from source import WFCNode
+from source import OverlapNode
+from source import TileNode
 
 
-
-class Node(ABC):
+class Node():
     node_names = ["one", "all", "prl", "markov", "sequence", "path", "map", "convolution", "convchain", "wfc"]
     def __init__(self):
         self.ip = None
         self.grid = None
 
-    @abstractmethod
     def Load(self, xelem, symmetry, grid):
         return True
 
-    @abstractmethod
     def Reset(self):
         pass
 
-    @abstractmethod
     def Go(self):
         return True
 
@@ -76,7 +68,9 @@ class Node(ABC):
             return None
         return result
 
-class Branch(Node, ABC):
+
+
+class Branch(Node):
     def __init__(self):
         super().__init__()
         self.parent = None

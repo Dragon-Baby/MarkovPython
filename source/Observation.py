@@ -1,5 +1,3 @@
-import XMLHelper as XH
-
 class Observation():
     def __init__(self, f, t, grid):
         self.fro = grid.values[f]

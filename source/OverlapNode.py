@@ -1,9 +1,9 @@
-import XMLHelper as XH
-from WFCNode import WFCNode
-import SymmetryHelper as SH
-from Grid import Grid
-import Graphics 
-import Helper as He
+from source import XMLHelper as XH
+from source import WFCNode
+from source import SymmetryHelper as SH
+from source import Grid
+from source import Graphics 
+from source import Helper as He
 import random as rd
 
 class OverlapNode(WFCNode):

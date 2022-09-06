@@ -1,12 +1,11 @@
-import XMLHelper as XH
-from WFCNode import WFCNode
+from source import XMLHelper as XH
+from source import WFCNode
 import random as rd
 import xml.etree.ElementTree as ET
-import VoxHelper as VH
-from Grid import Grid
-import Helper as He
-import SymmetryHelper as SH
-from source.SymmetryHelper import SquareSymmetries
+from source import VoxHelper as VH
+from source import Grid
+from source import Helper as He
+from source import SymmetryHelper as SH
 
 class TileNode(WFCNode):
     def __init__(self):

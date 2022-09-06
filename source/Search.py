@@ -1,8 +1,6 @@
-import XMLHelper as XH
-import Helper as He
-from Observation import Observation
+from source import Helper as He
+from source import Observation
 import random as rd
-import sys
 from queue import PriorityQueue
 
 def Apply(rule, x, y, state, MX):

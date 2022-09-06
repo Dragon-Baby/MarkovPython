@@ -1,5 +1,4 @@
-import XMLHelper as XH
-import xml.etree.ElementTree as ET
+from source import XMLHelper as XH
 
 class Grid():
     def __init__(self):
