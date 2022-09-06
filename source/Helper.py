@@ -1,4 +1,5 @@
 import random as rd
+import functools
 
 def Split(s, s1, s2):
     spl = s.split(s1)
@@ -89,3 +90,6 @@ def Power(a, n):
     for i in range(n):
         product *= a
     return product
+
+def Same(t1, t2):
+    return functools.reduce(lambda i, j : i and j, map(lambda m, k : m == k, t1, t2), True)

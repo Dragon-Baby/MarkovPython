@@ -74,6 +74,7 @@ if __name__ == "__main__":
             for result, legend, FX, FY, FZ in iter(interpreter.Run(seed, steps, gif)):
                 colors = list(map(lambda x : custom_palette[x], legend))
                 output_name = "output/{0}".format(interpreter.counter) if gif else "output/{0}_{1}".format(name, seed)
+                #### Render in Houdini
                 if FZ == 1 or iso:
                     # draw pic or vox
                     pass

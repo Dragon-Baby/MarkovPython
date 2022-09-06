@@ -3,6 +3,10 @@ from WFCNode import WFCNode
 import random as rd
 import xml.etree.ElementTree as ET
 import VoxHelper as VH
+from Grid import Grid
+import Helper as He
+import SymmetryHelper as SH
+from source.SymmetryHelper import SquareSymmetries
 
 class TileNode(WFCNode):
     def __init__(self):
@@ -44,6 +48,237 @@ class TileNode(WFCNode):
             print("tiles should be cubes for the full symmetry option : {0} != {1}".format(self.S, self.SZ))
             return False
         
+        self.new_grid = Grid.Load(xelem, (self.S - self.overlap) * grid.MX + self.overlap, (self.S - self.overlap) * grid.MY + self.overlap, (self.SZ - self.overlap) * grid.MZ + self.overlap)
+        if self.new_grid == None:
+            return False
+
+        self.tiledata = []
+        positions = {}
+        def newtile(f):
+            return [[[f]*self.SZ]*self.S]*self.S
+
+        def xRotate(p):
+            return newtile(lambda x, y, z : p[y + (self.S - 1 - x) * self.S + z * self.S * self.S])
+        
+        def yRotate(p):
+            return newtile(lambda x, y, z : p[z + y * self.S + (self.S - 1 - x) * self.S * self.S])
+
+        def zRotate(p):
+            return newtile(lambda x, y, z : p[x + z * self.S + (self.S - 1 - x) * self.S * self.S])
+
+        def xReflect(p):
+            return newtile(lambda x, y, z : p[(self.S - 1 - x) + y * self.S + z * self.S * self.S])
+
+        def yReflect(p):
+            return newtile(lambda x, y, z : p[x + (self.S - 1 - y) * self.S + z * self.S * self.S])
+
+        def zReflect(p):
+            return newtile(lambda x, y, z : p[x + y * self.S + (self.S - 1 - z) * self.S * self.S])
+
+        named_tile_data = {}
+        temp_stationary = []
+
+        uniques = []
+        xtiles = XH.Elements(xroot.find("./tiles"), ["tile"])
+        ind = 0
+        for xtile in xtiles:
+            tilename = XH.GetValue(xtile, "name", "")
+            weight = XH.GetValue(xtile, "weight", 1.0)
+
+            filename = "resources/tilesets/{0}/{1}.vox".format(tilesname, tilename)
+            vox = VH.LoadVox(filename)[0]
+            if vox == []:
+                print("couldn't read tile {0}".format(filename))
+                return False
+            (flat_tile, C) = He.Ords(vox, uniques)
+            if C > self.new_grid.C:
+                print("there were more than {0} colors in vos files".format(self.new_grid.C))
+                return False
+            
+            localdata = SH.CubeSymmetries(flat_tile, zRotate, yRotate, xReflect, He.Same) if full_symmetry else SH.SquareSymmetries(flat_tile, zRotate, xReflect, He.Same)
+
+            position = [False] * 128
+            named_tile_data[tilename] = localdata
+            for p in localdata:
+                self.tiledata.append(p)
+                temp_stationary.append(weight)
+                position[ind] = True
+                ind += 1
+
+            positions[tilename] = position
+
+        self.P = len(self.tiledata)
+        print("P = {0}".format(self.P))
+        self.weights = temp_stationary
+
+        map = {}
+        for xrule in xelem.findall("./rule"):
+            input = XH.GetValue(xrule, "in", "")
+            outputs = XH.GetValue(xrule, "out", "").split("|")
+            position = [False] * self.P
+            for s in outputs:
+                array = []
+                if s in positions.keys():
+                    array = positions[s]
+                else:
+                    print("unknown tilename {0} at line {1}".format(xrule._start_line_number))
+                    return False
+                for p in range(self.P):
+                    if array[p]:
+                        position[p] = True
+            map[grid.values[input]] = position
+
+        if not 0 in map.keys():
+            map[0] = [True] * self.P
+
+        temp_propagator = [[[False] * self.P] * self.P] * 6
+
+        def index(p):
+            for i in range(len(self.tiledata)):
+                if He.Same(p, self.tiledata[i]):
+                    return i
+
+        def last(attr):
+            return attr.split(" ")[-1]
+
+        def tile(attr):
+            code = attr.split(" ")
+            action = code[0] if len(code) == 2 else ""
+            starttile = named_tile_data[last(attr)][0]
+            i = len(action) - 1
+            while i >= 0:
+                sym = action[i]
+                if sym == "x":
+                    starttile = xRotate(starttile)
+                elif sym == "y":
+                    starttile = yRotate(starttile)
+                elif sym == "z":
+                    starttile = zRotate(starttile)
+                else:
+                    print("unknown symmetry {0}".format(sym))
+                    return []
+                i -= 1
+            return starttile
+
+        tilenames = list(map(lambda x : XH.GetValue(x, "name", ""), xtiles))
+        tilenames.append("")
+
+        for xneighbor in xroot.find("./neighbors").findall("./neighbor"):
+            if full_symmetry:
+                left = XH.GetValue(xneighbor, "left", "")
+                right = XH.GetValue(xneighbor, "right", "")
+                if not last(left) in tilenames or not last(right) in tilenames:
+                    print("unknown tile {0} or {1} at line {2}".format(last(left), last(right), xneighbor._start_line_number))
+                    return False
+                
+                ltile = tile(left)
+                rtile = tile(right)
+                if ltile == [] or rtile == []:
+                    return False
+
+                lsym = SH.SquareSymmetries(ltile, xRotate, yReflect, lambda p1, p2 : False)
+                rsym = SH.SquareSymmetries(rtile, xRotate, yReflect, lambda p1, p2 : False)
+
+                for i in range(len(lsym)):
+                    temp_propagator[0][index(lsym[i])][index(rsym[i])] = True
+                    temp_propagator[0][index(xReflect(rsym[i]))][index(xReflect(lsym[i]))] = True
+                
+                dtile = zRotate(ltile)
+                utile = zRotate(rtile)
+
+                dsym = SH.SquareSymmetries(dtile, yRotate, zReflect, lambda p1, p2 : False)
+                usym = SH.SquareSymmetries(utile, yRotate, zReflect, lambda p1, p2 : False)
+
+                for i in range(len(dsym)):
+                    temp_propagator[1][index(dsym[i])][index(usym[i])] = True
+                    temp_propagator[1][index(yReflect(usym[i]))][index(yReflect(dsym[i]))] = True
+
+                btile = zRotate(ltile)
+                ttile = zRotate(rtile)
+
+                bsym = SH.SquareSymmetries(btile, zRotate, xReflect, lambda p1, p2 : False)
+                tsym = SH.SquareSymmetries(ttile, zRotate, xReflect, lambda p1, p2 : False)
+
+                for i in range(len(bsym)):
+                    temp_propagator[4][index(bsym[i])][index(tsym[i])] = True
+                    temp_propagator[4][index(zReflect(tsym[i]))][index(zReflect(bsym[i]))] = True
+
+            elif XH.GetValue(xneighbor, "left", "") != "":
+                left = XH.GetValue(xneighbor, "left", "")
+                right = XH.GetValue(xneighbor, "right", "")
+
+                if not last(left) in tilenames or not last(right) in tilenames:
+                    print("unknown tile {0} or {1} at line {2}".format(last(left), last(right), xneighbor._start_line_number))
+                    return False
+
+                ltile = tile(left)
+                rtile = tile(right)
+                if ltile == [] or rtile == []:
+                    return False
+
+                temp_propagator[0][index(ltile)][index(rtile)] = True
+                temp_propagator[0][index(yReflect(ltile))][index(yReflect(rtile))] = True
+                temp_propagator[0][index(xReflect(rtile))][index(xReflect(ltile))] = True
+                temp_propagator[0][index(yReflect(xReflect(rtile)))][index(yReflect(xReflect(ltile)))] = True
+
+
+                dtile = zRotate(ltile)
+                utile = zRotate(rtile)
+
+                temp_propagator[0][index(dtile)][index(utile)] = True
+                temp_propagator[0][index(yReflect(dtile))][index(yReflect(utile))] = True
+                temp_propagator[0][index(xReflect(utile))][index(xReflect(dtile))] = True
+                temp_propagator[0][index(yReflect(xReflect(utile)))][index(yReflect(xReflect(dtile)))] = True
+
+            else:
+                top = XH.GetValue(xneighbor, "top", "")
+                bottom = XH.GetValue(xneighbor, "bottom", "")
+
+                if not last(top) in tilenames or not last(bottom) in tilenames:
+                    print("unknown tile {0} or {1} at line {2}".format(last(top), last(bottom), xneighbor._start_line_number))
+                    return False
+
+                ttile = tile(top)
+                ntile = tile(bottom)
+
+                if ttile == [] or btile == []:
+                    return False
+
+                bsym = SH.SquareSymmetries(btile, zRotate, xReflect, lambda p1, p2 : False)
+                tsym = SH.SquareSymmetries(ttile, zRotate, xReflect, lambda p1, p2 : False)
+
+                for i in range(len(tsym)):
+                    temp_propagator[4][index(bsym[i])][index(tsym[i])] = True
+
+        for p2 in range(self.P):
+            for p1 in range(self.P):
+                temp_propagator[2][p2][p1] = temp_propagator[0][p1][p2]
+                temp_propagator[3][p2][p1] = temp_propagator[1][p1][p2]
+                temp_propagator[5][p2][p1] = temp_propagator[4][p1][p2]
+
+        sparse_propagator = [[[]]] * 6
+        for d in range(6):
+            sparse_propagator[d] = [[]] * self.P
+            for t in range(self.P):
+                sparse_propagator[d][t] = []
+
+        self.propagator = [[[]]] * 6
+        for d in range(6):
+            self.propagator[d] = [[]] * self.P
+            for p1 in range(self.P):
+                sp = sparse_propagator[d][p1]
+                tp = temp_propagator[d][p1]
+
+                for p2 in range(self.P):
+                    if tp[p2]:
+                        sp.append(p2)
+
+                ST = len(sp)
+                self.propagator[d][p1] = [0] * ST
+                for st in range(ST):
+                    self.propagator[d][p1][st] = sp[st]
+
+        return super().Load(xelem, parent_symmetry, grid)
 
 
 
