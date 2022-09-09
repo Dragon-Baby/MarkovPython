@@ -1,19 +1,19 @@
 import random as rd
 import math
-from source import RuleNode
-from source import Observation
-from source import Field
+import RuleNode
 
 
-class OneNode(RuleNode):
+class OneNode(RuleNode.RuleNode):
     def __init__(self):
         super().__init__()
 
     def Load(self, xelem, parent_symmetry, grid):
         if not super().Load(xelem, parent_symmetry, grid):
+            print("failed to load as rule node!")
             return False
         self.matches = []
-        self.match_mask = [[False]*len(len(grid.state))]*len(self.rules)
+        self.match_mask = [[False]*len(grid.state)]*len(self.rules)
+        print("successed to load as one node!")
         return True
 
     def Reset(self):
@@ -43,7 +43,9 @@ class OneNode(RuleNode):
                             changes.append((sx,sy,sz))
     
     def Go(self):
+        print("Go for Node:{0}".format(self))
         if not super().Go():
+            print("Failed to Go as a Rule node!")
             return False
         self.last_matched_turn = self.ip.counter
 
@@ -56,16 +58,22 @@ class OneNode(RuleNode):
         
         R, X, Y, Z = self.RandomMatch(self.ip.random)
         if R < 0:
+            print("Failed！")
             return False
         else:
             self.last[R] = True
             self.Apply(self.rules[R], X, Y, Z)
             self.counter += 1
+            print("Worked!")
             return True
 
     def RandomMatch(self, random):
+        print("Start RandomMatch!")
+        import Observation
+        import Field
         if self.potentials != []:
-            if self.observations != [] and Observation.IsGoalReached(self.grid.state, self.future):
+            print("There're exist potential!")
+            if self.observations != [] and Observation.Observation.IsGoalReached(self.grid.state, self.future):
                 self.future_computed = False
                 return (-1,-1,-1,-1)
             max = -1000.0
@@ -83,7 +91,7 @@ class OneNode(RuleNode):
                     self.match_count -= 1
                     k -= 1
                 else:
-                    heuristic = Field.DeltaPointwise(self.grid.state, self.rules[r], x, y, z, self.fields, self.potentials, self.grid.MX, self.grid.MY)
+                    heuristic = Field.Field.DeltaPointwise(self.grid.state, self.rules[r], x, y, z, self.fields, self.potentials, self.grid.MX, self.grid.MY)
                     if heuristic == None:
                         continue
                     h = float(heuristic)
@@ -98,7 +106,9 @@ class OneNode(RuleNode):
                 k += 1
             return self.matches[argmax] if argmax >= 0 else (-1,-1,-1,-1)
         else:
+            print("match_count:{0}".format(self.match_count))
             while self.match_count > 0:
+                rd.seed(self.ip.random)
                 match_index = rd.randrange(0, self.match_count)
                 (r, x, y, z) = self.matches[match_index]
                 i = x + y * self.grid.MX + z * self.grid.MX * self.grid.MY

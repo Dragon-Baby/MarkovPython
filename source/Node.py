@@ -1,15 +1,5 @@
-from source import XMLHelper as XH
-from source import SymmetryHelper as SH
-from source import OneNode
-from source import AllNode
-from source import ParallelNode
-from source import PathNode
-from source import MapNode
-from source import ConvolutionNode
-from source import ConvChainNode
-from source import WFCNode
-from source import OverlapNode
-from source import TileNode
+import XMLHelper as XH
+import SymmetryHelper as SH
 
 
 class Node():
@@ -29,6 +19,15 @@ class Node():
 
     @staticmethod
     def Factory(xelem, symmetry, ip, grid):
+        import OneNode
+        import AllNode
+        import ParallelNode
+        import PathNode
+        import MapNode
+        import ConvolutionNode
+        import ConvChainNode
+        import OverlapNode
+        import TileNode
         if not xelem.tag in Node.node_names:
             print("unknown node type \"{0}\" at line {1}".format(xelem.tag, xelem._start_line_number))
             return None
@@ -36,34 +35,33 @@ class Node():
         result = None
         name = xelem.tag
         if name == "one":
-            result = OneNode()
+            result = OneNode.OneNode()
         elif name == "all":
-            result = AllNode()
+            result = AllNode.AllNode()
         elif name == "prl":
-            result = ParallelNode()
+            result = ParallelNode.ParallelNode()
         elif name == "markov":
             result = MarkovNode()
         elif name == "sequence":
             result = SequenceNode()
         elif name == "path":
-            result = PathNode()
+            result = PathNode.PathNode()
         elif name == "map":
-            result = MapNode()
+            result = MapNode.MapNode()
         elif name == "convolution":
-            result = ConvolutionNode()
+            result = ConvolutionNode.ConvolutionNode()
         elif name == "convchain":
-            result = ConvChainNode()
+            result = ConvChainNode.ConvChainNode()
         elif name == "wfc" and XH.GetValue(xelem, "sample", "") != "":
-            result = OverlapNode()
+            result = OverlapNode.OverlapNode()
         elif name == "wfc" and XH.GetValue(xelem, "tileset", "") != "":
-            result = TileNode()
+            result = TileNode.TileNode()
         else:
             result = None
-
         result.ip = ip
         result.grid = grid
-        success = result.Load(xelem, symmetry. grid)
-
+        print(result)
+        success = result.Load(xelem, symmetry, grid)
         if not success:
             return None
         return result
@@ -84,19 +82,23 @@ class Branch(Node):
             print("unknown symmetry {0} at line {1}".format(symmetry_str, xelem._start_line_number))
             return False
         
-        xchildren = XH.Elements(Branch.node_names)
+        xchildren = XH.Elements(xelem, Node.node_names)
         self.nodes = [None] * len(xchildren)
+        import MapNode
+        import WFCNode
         for c in range(len(xchildren)):
-            child = Branch.Load(xchildren[c], symmetry, self.ip, grid)
+            child = Node.Factory(xchildren[c], symmetry, self.ip, grid)
+            print(child)
             if child == None:
                 return False
             if type(child) == Branch:
-                child.parent = None if type(child) is MapNode or type(child) is WFCNode else self
+                child.parent = None if type(child) is MapNode.MapNode or (WFCNode.WFCNode in type(child).__bases__) else self
             self.nodes[c] = child
 
         return True
 
     def Go(self):
+        print("Go for Node:{0}".format(self))
         while self.n < len(self.nodes):
             node = self.nodes[self.n]
             if type(node) is Branch:
@@ -123,8 +125,9 @@ class MarkovNode(Branch):
         super().__init__()
         self.nodes = [child]
         self.ip = ip
-        self.grid = ip.grid
+        self.grid = self.ip.grid
 
     def Go(self):
+        print("Go for Node:{0}".format(self))
         self.n = 0
         return super().Go()

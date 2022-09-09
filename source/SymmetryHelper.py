@@ -24,7 +24,7 @@ def GetSymmetry(d2, s, dflt):
     if s in squareSubgroups.keys():
         result = squareSubgroups[s]
         success = d2
-    else:
+    if not success:
         if s in cubeSubgroups.keys():
             result = cubeSubgroups[s]
             success = True
@@ -49,7 +49,7 @@ def SquareSymmetries(thing, rotation, reflection, same, subgroup=[]):
 
     result = []
     for i in range(8):
-        if (subgroup == [] or subgroup[i]) and len(filter(lambda x : same(x, things[i]), result)) == 0:
+        if (subgroup == [] or subgroup[i]) and len(list(filter(lambda x : same(x, things[i]), result))) == 0:
             result.append(things[i])
 
     return result
@@ -107,7 +107,7 @@ def CubeSymmetries(thing, a, b, r, same, subgroup=[]):
 
     result = []
     for i in range(48):
-        if (subgroup == [] or subgroup[i]) and len(filter(lambda x : same(x, s[i]), result)) == 0:
+        if (subgroup == [] or subgroup[i]) and len(list(filter(lambda x : same(x, s[i]), result))) == 0:
             result.append(s[i])
 
     return result

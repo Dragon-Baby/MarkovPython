@@ -1,9 +1,9 @@
-from source import XMLHelper as XH
-from source import Node
+import XMLHelper as XH
+import Node
 import random as rd
 import sys
 
-class ConvolutionNode(Node):
+class ConvolutionNode(Node.Node):
     def __init__(self):
         super().__init__()
         self.rules = []
@@ -46,6 +46,7 @@ class ConvolutionNode(Node):
         self.counter = 0
 
     def Go(self):
+        print("Go for Node:{0}".format(self))
         if self.steps > 0 and self.counter >= self.steps:
             return False
         MX = self.grid.MX

@@ -1,13 +1,13 @@
-from source import XMLHelper as XH
-from source import Branch
-from abc import ABC, abstractmethod
+import XMLHelper as XH
+import Node
+# from abc import ABC, abstractmethod
 import math
 import random as rd
 import sys
-from source import Helper as He
+import Helper as He
 
 
-class WFCNode(Branch, ABC):
+class WFCNode(Node.Branch):
     DX = [1, 0, -1, 0, 0, 0]
     DY = [0, 1, 0, -1, 0, 0]
     DZ = [0, 0, 0, 0, 1, -1]
@@ -61,6 +61,7 @@ class WFCNode(Branch, ABC):
         self.firstgo = True
 
     def Go(self):
+        print("Go for Node:{0}".format(self))
         if self.n >= 0:
             return super().Go()
         if self.firstgo:
@@ -111,7 +112,7 @@ class WFCNode(Branch, ABC):
                 if node >= 0:
                     self.Observe(node, self.random)
                     observation_sofar += 1
-                    success = self.Porpagate()
+                    success = self.Propagate()
                     if not success:
                         print("CONTRADICTION on try {0} with {1} observations".format(k, observation_sofar))
                         break
@@ -225,7 +226,7 @@ class WFCNode(Branch, ABC):
             self.wave.entropies[i] -= self.wave.sums_of_weight_log_weights[i] / sum - math.log(sum)
 
 
-    @abstractmethod
+    # @abstractmethod
     def UpdateState(self):
         pass
 

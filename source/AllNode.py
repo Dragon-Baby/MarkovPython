@@ -1,12 +1,10 @@
-from source import RuleNode
-# from RuleNode import RuleNode
-from source import Field
+import RuleNode
 import random as rd
 import math
-from source import Helper as He
+import Helper as He
 
 
-class AllNode(RuleNode):
+class AllNode(RuleNode.RuleNode):
     def __init__(self):
         super().__init__()   
 
@@ -14,7 +12,7 @@ class AllNode(RuleNode):
         if not super().Load(xelem, parent_symmetry, grid):
             return False
         self.matches = []
-        self.match_mask = [[False]*len(len(grid.state))]*len(self.rules)
+        self.match_mask = [[False]*(len(grid.state))]*len(self.rules)
         return True
 
     def Fit(self, r, x, y, z, new_state, MX, MY):
@@ -40,6 +38,7 @@ class AllNode(RuleNode):
                         self.ip.changes.append((sx,sy,sz))
 
     def Go(self):
+        print("Go for Node:{0}".format(self))
         if not super().Go():
             return False
         self.last_matched_turn = self.ip.counter
@@ -56,6 +55,7 @@ class AllNode(RuleNode):
 
         MX = self.grid.MX
         MY = self.grid.MY
+        import Field
         if self.potentials != []:
             first_heuristic = 0
             first_heuristic_computed = False

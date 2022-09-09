@@ -1,0 +1,9 @@
+<!-- <one values="BW" origin="True" in="WB" out="WW"/> -->
+
+
+<sequence values="BEC" symmetry="(x)">
+  <one in="B" out="E" steps="20"/>
+  <one in="EB" out="EE" steps="100"/>
+  <all in="EB" out="CB"/>
+  <all in="C/B" out="C/C"/>
+</sequence>

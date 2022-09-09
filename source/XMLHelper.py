@@ -3,10 +3,10 @@ sys.modules['_elementtree'] = None
 import xml.etree.ElementTree as ET
 
 class LineNumberingParser(ET.XMLParser):
-    def _start_list(self, *args, **kwargs):
+    def _start(self, *args, **kwargs):
         # Here we assume the default XML parser which is expat
         # and copy its element position attributes into output Elements
-        element = super(self.__class__, self)._start_list(*args, **kwargs)
+        element = super(self.__class__, self)._start(*args, **kwargs)
         element._start_line_number = self.parser.CurrentLineNumber
         element._start_column_number = self.parser.CurrentColumnNumber
         element._start_byte_index = self.parser.CurrentByteIndex
@@ -38,7 +38,16 @@ def GetValue(xelem, name, default):
     return value
 
 def Elements(xelem, tags):
-    return xelem.findall("".join(["./{}|"]*len(tags)).format(*tags).rstrip("|"))
+    # print("Now is here!", xelem, "".join(["./{}|"]*len(tags)).format(*tags).rstrip("|"))
+    print("Try to get child elements!")
+    children = xelem.findall("./*")
+    # print(children)
+    children = list(filter(lambda e : e.tag in tags, list(children)))
+    # for child in children:
+    #     if child.tag not in tags:
+    #         children.remove(child)
+    print("parents {0}:\n children {1}".format(xelem._start_line_number, list(map(lambda x : x._start_line_number, children))))
+    return children
 
 
 def MyDescendants(xelem, tags):
@@ -48,5 +57,5 @@ def MyDescendants(xelem, tags):
         e = q.pop(0)
         if e != xelem:
             yield e
-        for x in e.findall("".join(["./{}|"]*len(tags)).format(*tags).rstrip("|")):
+        for x in Elements(e, tags):
             q.append(x)

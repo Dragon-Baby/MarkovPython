@@ -1,5 +1,4 @@
-from source import Helper as He
-from source import Observation
+import Helper as He
 import random as rd
 from queue import PriorityQueue
 
@@ -135,13 +134,14 @@ def OneChildStates(state, MX, MY, rules):
 
 
 def Run(present, future, rules, MX, MY, MZ, C, all, limit, depth_coefficient, seed):
+    import Observation
     bpotentials = [[-1]*len(present)]*C
     fpotentials = [[-1]*len(present)]*C
 
-    Observation.ComputeBackwardPotentials(bpotentials, future, MX, MY, MZ, rules)
-    root_backward_estimate = Observation.BackwardPointwise(bpotentials, present)
-    Observation.ComputeForwardPotentials(fpotentials, present, MX, MY, MZ, rules)
-    root_forward_estimate = Observation.ForwardPointwise(fpotentials, future)
+    Observation.Observation.ComputeBackwardPotentials(bpotentials, future, MX, MY, MZ, rules)
+    root_backward_estimate = Observation.Observation.BackwardPointwise(bpotentials, present)
+    Observation.Observation.ComputeForwardPotentials(fpotentials, present, MX, MY, MZ, rules)
+    root_forward_estimate = Observation.Observation.ForwardPointwise(fpotentials, future)
 
     if root_backward_estimate < 0 or root_forward_estimate < 0:
         print("INCORRECT PROBLEM")
@@ -182,9 +182,9 @@ def Run(present, future, rules, MX, MY, MZ, C, all, limit, depth_coefficient, se
                         frontier.put((child_index, old_board.Rank(seed, depth_coefficient)))
                         frontier_length += 1
             else:
-                child_backward_estimate = Observation.BackwardPointwise(bpotentials, child_state)
-                Observation.ComputeForwardPotentials(fpotentials, child_state, MX, MY, MZ, rules)
-                child_forward_estimate = Observation.ForwardPointwise(fpotentials, future)
+                child_backward_estimate = Observation.Observation.BackwardPointwise(bpotentials, child_state)
+                Observation.Observation.ComputeForwardPotentials(fpotentials, child_state, MX, MY, MZ, rules)
+                child_forward_estimate = Observation.Observation.ForwardPointwise(fpotentials, future)
 
                 if child_backward_estimate < 0 or child_forward_estimate < 0:
                     continue

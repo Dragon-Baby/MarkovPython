@@ -1,8 +1,9 @@
-from source import XMLHelper as XH
-from source import SymmetryHelper as SH 
-from source import Helper as He
-from source import Graphics as Gp
-from source import VoxHelper as VH
+from tkinter import X
+import XMLHelper as XH
+import SymmetryHelper as SH 
+import Helper as He
+import Graphics as Gp
+import VoxHelper as VH
 
 
 class Rule():
@@ -15,22 +16,24 @@ class Rule():
         self.OMY = OMY
         self.OMZ = OMZ
         self.p = p
-        self.ouput = []
+        self.output = output
         self.binput = []
         self.ishifts = [[]]
         self.oshifts = [[]]
         self.original = False
 
-        lists = [[0,0,0]]*C
+        lists = [[]] * C
         for z in range(self.IMZ):
             for y in range(self.IMY):
                 for x in range(self.IMX):
                     w = self.input[x + y * self.IMX + z * self.IMY * self.IMX]
                     for c in range(C):
                         if (w & 1) == 1:
-                            lists[c] = [x,y,z]
-        self.ishifts = [[0,0,0]]*C
+                            lists[c].append([x,y,z])
+                        w  = w >> 1
+        self.ishifts = lists
 
+        lists = [[]] * C
         if self.OMX == self.IMX and self.OMY == self.IMY and self.OMZ == self.IMZ:
             for c in range(C):
                 lists[c] = []
@@ -39,19 +42,17 @@ class Rule():
                     for x in range(self.IMX):
                         o = self.output[x + y * self.IMX + z * self.IMY * self.IMX]
                         if o != 0xff:
-                            lists[o] = [x,y,z]
+                            lists[o].append([x,y,z])
                         else:
                             for c in range(C):
-                                lists[c] = [x,y,z]
-            self.oshifts = [[0,0,0]]*C
-            for c in range(C):
-                self.oshifts[c] = lists[c]
+                                lists[c].append([x,y,z])
+            self.oshifts = lists
 
         wild_card = (1 << C) - 1
         self.binput = [0] * len(self.input)
         for i in range(0, len(self.input)):
             w = self.input[i]
-            self.binput[i] = 0xff if w == wild_card else w
+            self.binput[i] = 2**C-1 if w == wild_card else len(bin(w)[2:]) - len(bin(w)[2:].rstrip("0"))
 
     def ZRotated(self):
         newinput = [0]*len(self.input)
@@ -70,30 +71,31 @@ class Rule():
 
     def YRotated(self):
         newinput = [0]*len(self.input)
-        for z in range(self.IMZ):
-            for y in range(self.IMY):
-                for x in range(self.IMX):
-                    newinput[x + y * self.IMY + z * self.IMX * self.IMY] = self.input[self.IMX - 1 - x + y * self.IMX + z * self.IMX * self.IMY]
-        newoutput = [0]*len(self.output)
-        for z in range(self.OMZ):
-            for y in range(self.OMY):
-                for x in range(self.OMX):
-                    newoutput[x + y * self.OMY + z * self.OMX * self.OMY] = self.output[self.OMX - 1 - x + y * self.OMX + z * self.OMX * self.OMY]
-        
-        return Rule(newinput, self.IMY, self.IMX, self.IMZ, newoutput, self.OMY, self.OMX, self.OMZ, len(self.ishifts), self.p)
-
-    
-    def Refelcted(self):
-        newinput = [0]*len(self.input)
+        # print(len(self.input), self.IMX + self.IMX * self.IMY, self.IMX*self.IMY*self.IMZ)
         for z in range(self.IMX):
             for y in range(self.IMY):
                 for x in range(self.IMZ):
-                    newinput[x + y * self.IMY + z * self.IMX * self.IMY] = self.input[self.IMX - 1 - z + y * self.IMX + x * self.IMX * self.IMY]
+                    newinput[x + y * self.IMZ + z * self.IMZ * self.IMY] = self.input[self.IMX - 1 - z + y * self.IMX + x * self.IMX * self.IMY]
         newoutput = [0]*len(self.output)
         for z in range(self.OMX):
             for y in range(self.OMY):
                 for x in range(self.OMZ):
-                    newoutput[x + y * self.OMY + z * self.OMX * self.OMY] = self.output[self.OMX - 1 - z + y * self.OMX + x * self.OMX * self.OMY]
+                    newoutput[x + y * self.OMZ + z * self.OMZ * self.OMY] = self.output[self.OMX - 1 - z + y * self.OMX + x * self.OMX * self.OMY]
+        
+        return Rule(newinput, self.IMY, self.IMX, self.IMZ, newoutput, self.OMY, self.OMX, self.OMZ, len(self.ishifts), self.p)
+
+    
+    def Reflected(self):
+        newinput = [0]*len(self.input)
+        for z in range(self.IMZ):
+            for y in range(self.IMY):
+                for x in range(self.IMX):
+                    newinput[x + y * self.IMX + z * self.IMX * self.IMY] = self.input[self.IMX - 1 - x + y * self.IMX + z * self.IMX * self.IMY]
+        newoutput = [0]*len(self.output)
+        for z in range(self.OMZ):
+            for y in range(self.OMY):
+                for x in range(self.OMX):
+                    newoutput[x + y * self.OMX + z * self.OMX * self.OMY] = self.output[self.OMX - 1 - x + y * self.OMX + z * self.OMX * self.OMY]
         
         return Rule(newinput, self.IMY, self.IMX, self.IMZ, newoutput, self.OMY, self.OMX, self.OMZ, len(self.ishifts), self.p)
 
@@ -162,8 +164,11 @@ class Rule():
     @staticmethod
     def Load(xelem, gin, gout):
         line_number = xelem._start_line_number
+        print("line_number:{0}".format(line_number))
+        import os 
+        src_folder = "{0}".format(os.path.dirname(os.path.abspath(__file__)).rstrip("\source"))
         def file_path(name):
-            result = "resources/rules/"
+            result = "{0}/resources/rules/".format(src_folder)
             if gout.folder != "":
                 result += gout.folder + "/"
             result += name
@@ -171,7 +176,9 @@ class Rule():
             return result
         
         in_str = XH.GetValue(xelem, "in", "")
+        print("in", in_str)
         out_str = XH.GetValue(xelem, "out", "")
+        print("out", out_str)
         fin_str = XH.GetValue(xelem, "fin", "")
         fout_str = XH.GetValue(xelem, "fout", "")
         file_str = XH.GetValue(xelem, "file", "")
@@ -180,7 +187,7 @@ class Rule():
         in_rect = []
         out_rect = []
         IMX = IMY = IMZ = OMX = OMY = OMZ = -1
-        if file_str != "":
+        if file_str == "":
             if in_str == "" and fin_str == "":
                 print("no input in a rule at line {0}".format(line_number))
                 return None
@@ -189,11 +196,13 @@ class Rule():
                 return None
             
             (in_rect, IMX, IMY, IMZ) = Rule.Parse(in_str) if in_str != "" else Rule.LoadResource(file_path(fin_str), legend, gin.MZ==1)
+            print("in_rect", in_rect, IMX, IMY, IMZ)
             if in_rect == []:
                 print(" in input at line {0}".format(line_number))
                 return None
 
             (out_rect, OMX, OMY, OMZ) = Rule.Parse(out_str) if out_str != "" else Rule.LoadResource(file_path(fout_str), legend, gin.MZ==1)
+            print("out_rect", out_rect, OMX, OMY, OMZ)
             if out_rect == []:
                 print(" in output at line {0}".format(line_number))
                 return None
@@ -213,15 +222,15 @@ class Rule():
                 print("odd width {0} in {1}".format(FX, file_str))
                 return None
 
-            IMX = OMX = FX / 2
+            IMX = OMX = int(FX / 2)
             IMY = OMY = FY
             IMZ = OMZ = FZ
 
             for z in range(FZ):
                 for y in range(FY):
-                    for x in range(FX / 2):
+                    for x in range(int(FX / 2)):
                         in_rect = rect[x + y * FX + z * FX * FY]
-                        out_rect = rect[x + FX / 2 + y * FX + z * FX * FY]
+                        out_rect = rect[x + int(FX / 2) + y * FX + z * FX * FY]
 
         input = [0] * len(in_rect)
         for i in range(len(in_rect)):
@@ -241,13 +250,16 @@ class Rule():
                 output[i] = 0xff
             else:
                 value = 0
-                if c in gout.waves.keys():
-                    value = gout.waves[c]
+                if c in gout.values.keys():
+                    value = gout.values[c]
                 else:
                     print("output code {0} at line {1} is not found in codes".format(c, line_number))
                     return None
                 output[i] = value  
 
+        # print("gin:{0}, gout:{1}".format(gin.waves, gout.waves))
+        print("input:{0}".format(input))
+        print("output:{0}".format(output))
         p = XH.GetValue(xelem, "p", 1.0)
         return Rule(input, IMX, IMY, IMZ, output, OMX, OMY, OMZ, gin.C, p)
 

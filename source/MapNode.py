@@ -1,10 +1,8 @@
-from source import XMLHelper as XH
-from source import Branch
-from source import Rule
-from source import Grid
-from source import SymmetryHelper as SH
+import XMLHelper as XH
+import Node
+import SymmetryHelper as SH
 
-class MapNode(Branch):
+class MapNode(Node.Branch):
     def __init__(self):
         super().__init__()
         self.new_grid = None
@@ -12,6 +10,8 @@ class MapNode(Branch):
         self.NX = self.NY = self.NZ = self.DX = self.DY = self.DZ = 0
 
     def Load(self, xelem, parent_symmetry, grid):
+        import Rule
+        import Grid
         scale_str = XH.GetValue(xelem, "scale", "")
         if scale_str == "":
             print("scale should be specified in map node")
@@ -32,7 +32,7 @@ class MapNode(Branch):
         (NY, DY) = readScale(scales[1])
         (NZ, DZ) = readScale(scales[2])
 
-        self.new_grid = Grid.Load(xelem, grid.MX * NX / DX, grid.MY * NY / DY, grid.MZ * NZ / DZ)
+        self.new_grid = Grid.Grid.Load(xelem, grid.MX * NX / DX, grid.MY * NY / DY, grid.MZ * NZ / DZ)
         if self.new_grid == None:
             return False
         
@@ -42,7 +42,7 @@ class MapNode(Branch):
 
         rule_list = []
         for xrule in XH.Elements(xelem, ["rule"]):
-            rule = Rule.Load(xrule, grid, self.new_grid)
+            rule = Rule.Rule.Load(xrule, grid, self.new_grid)
             rule.original = True
             if rule == None:
                 return False
@@ -96,6 +96,7 @@ class MapNode(Branch):
                         
 
     def Go(self):
+        print("Go for Node:{0}".format(self))
         if self.n >= 0:
             super().Go()
         self.new_grid.Clear()

@@ -1,12 +1,12 @@
-from source import XMLHelper as XH
-from source import Node
-from source import Graphics
-from source import Helper as He
-from source import SymmetryHelper as SH
+import XMLHelper as XH
+import Node
+import Graphics
+import Helper as He
+import SymmetryHelper as SH
 import random as rd
 import math
 
-class ConvChainNode(Node):
+class ConvChainNode(Node.Node):
     def __init__(self):
         super().__init__()
         self.N = 0
@@ -57,6 +57,7 @@ class ConvChainNode(Node):
         state[i] = self.c1 if state[i] == self.c0 else self.c0
 
     def Go(self):
+        print("Go for Node:{0}".format(self))
         if self.steps > 0 and self.counter >= self.steps:
             return False
         MX = self.grid.MX

@@ -1,4 +1,4 @@
-from source import XMLHelper as XH
+import XMLHelper as XH
 
 class Field():
     def __init__(self, xelem, grid):

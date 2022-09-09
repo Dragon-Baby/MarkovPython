@@ -1,13 +1,13 @@
-from source import XMLHelper as XH
-from source import WFCNode
+import XMLHelper as XH
+import WFCNode
 import random as rd
 import xml.etree.ElementTree as ET
-from source import VoxHelper as VH
-from source import Grid
-from source import Helper as He
-from source import SymmetryHelper as SH
+import VoxHelper as VH
+import Helper as He
+import SymmetryHelper as SH
+import os
 
-class TileNode(WFCNode):
+class TileNode(WFCNode.WFCNode):
     def __init__(self):
         super().__init__()
         self.tiledata = []
@@ -15,6 +15,7 @@ class TileNode(WFCNode):
         self.overlap = self.overlapz = 0
 
     def Load(self, xelem, parent_symmetry, grid):
+        import Grid
         self.periodic = XH.GetValue(xelem, "periodic", False)
         self.name = XH.GetValue(xelem, "tileset", "")
         tilesname = XH.GetValue(xelem, "tiles", self.name)
@@ -22,11 +23,12 @@ class TileNode(WFCNode):
         self.overlapz = XH.GetValue(xelem, "overlapz", 0)
 
         xdoc = None
-        filepath = "resources/tilesets/{0}.xml".format(self.name)
+        src_folder = "{0}".format(os.path.dirname(os.path.abspath(__file__)).rstrip("\source"))
+        filepath = "{1}/resources/tilesets/{0}.xml".format(self.name,src_folder)
         try:
             xdoc = ET.parse(filepath, parser=XH.LineNumberingParser())
         except:
-            print("couldm't open tileset {0}".format(filepath))
+            print("couldn't open tileset {0}".format(filepath))
             return False
         
         xroot = xdoc.getroot()
@@ -36,7 +38,7 @@ class TileNode(WFCNode):
         first_filename = "{0}/{1}.vox".format(tilesname, XH.GetValue(xfirst_tile, "name", ""))
         first_data = []
         SY = 0
-        (first_data, self.S, SY, self.SZ) = VH.LoadVox("resources/tilesets/{0}".format(first_filename))
+        (first_data, self.S, SY, self.SZ) = VH.LoadVox("{1}/resources/tilesets/{0}".format(first_filename, src_folder))
         if first_data == []:
             print("couldn't read {0}".format(first_filename))
             return False
@@ -47,32 +49,50 @@ class TileNode(WFCNode):
             print("tiles should be cubes for the full symmetry option : {0} != {1}".format(self.S, self.SZ))
             return False
         
-        self.new_grid = Grid.Load(xelem, (self.S - self.overlap) * grid.MX + self.overlap, (self.S - self.overlap) * grid.MY + self.overlap, (self.SZ - self.overlap) * grid.MZ + self.overlap)
+        self.new_grid = Grid.Grid.Load(xelem, (self.S - self.overlap) * grid.MX + self.overlap, (self.S - self.overlap) * grid.MY + self.overlap, (self.SZ - self.overlap) * grid.MZ + self.overlap)
         if self.new_grid == None:
             return False
 
         self.tiledata = []
         positions = {}
         def newtile(f):
-            return [[[f]*self.SZ]*self.S]*self.S
+            result = [0]  * self.S * self.S * self.SZ
+            for z in range(self.SZ):
+                for y in range(self.S):
+                    for x in range(self.S):
+                        result[z*self.S * self.S + y * self.S + x] = f(x,y,z)
+            return result
+
 
         def xRotate(p):
-            return newtile(lambda x, y, z : p[y + (self.S - 1 - x) * self.S + z * self.S * self.S])
+            def f(x,y,z):
+                return p[y + (self.S - 1 - x) * self.S + z * self.S * self.S]
+            return newtile(f)
         
         def yRotate(p):
-            return newtile(lambda x, y, z : p[z + y * self.S + (self.S - 1 - x) * self.S * self.S])
+            def f(x,y,z):
+                return p[z + y * self.S + (self.S - 1 - x) * self.S * self.S]
+            return newtile(f)
 
         def zRotate(p):
-            return newtile(lambda x, y, z : p[x + z * self.S + (self.S - 1 - x) * self.S * self.S])
+            def f(x,y,z):
+                return p[x + z * self.S + (self.S - 1 - x) * self.S * self.S]
+            return newtile(f)
 
         def xReflect(p):
-            return newtile(lambda x, y, z : p[(self.S - 1 - x) + y * self.S + z * self.S * self.S])
+            def f(x,y,z):
+                p[(self.S - 1 - x) + y * self.S + z * self.S * self.S]
+            return newtile(f)
 
         def yReflect(p):
-            return newtile(lambda x, y, z : p[x + (self.S - 1 - y) * self.S + z * self.S * self.S])
+            def f(x,y,z):
+                return p[x + (self.S - 1 - y) * self.S + z * self.S * self.S]
+            return newtile(f)
 
         def zReflect(p):
-            return newtile(lambda x, y, z : p[x + y * self.S + (self.S - 1 - z) * self.S * self.S])
+            def f(x,y,z):
+                return p[x + y * self.S + (self.S - 1 - z) * self.S * self.S]
+            return newtile(f)
 
         named_tile_data = {}
         temp_stationary = []
@@ -84,7 +104,7 @@ class TileNode(WFCNode):
             tilename = XH.GetValue(xtile, "name", "")
             weight = XH.GetValue(xtile, "weight", 1.0)
 
-            filename = "resources/tilesets/{0}/{1}.vox".format(tilesname, tilename)
+            filename = "{2}/resources/tilesets/{0}/{1}.vox".format(tilesname, tilename, src_folder)
             vox = VH.LoadVox(filename)[0]
             if vox == []:
                 print("couldn't read tile {0}".format(filename))
@@ -136,6 +156,7 @@ class TileNode(WFCNode):
             for i in range(len(self.tiledata)):
                 if He.Same(p, self.tiledata[i]):
                     return i
+            return -1
 
         def last(attr):
             return attr.split(" ")[-1]
@@ -159,7 +180,11 @@ class TileNode(WFCNode):
                 i -= 1
             return starttile
 
-        tilenames = list(map(lambda x : XH.GetValue(x, "name", ""), xtiles))
+        # print("xtiles", xtiles)
+        tilenames = []
+        for x in xtiles:
+            tilenames.append( XH.GetValue(x, "name", ""))
+        # tilenames = list(map(lambda x : XH.GetValue(x, "name", ""), list(xtiles)))
         tilenames.append("")
 
         for xneighbor in xroot.find("./neighbors").findall("./neighbor"):
@@ -172,6 +197,7 @@ class TileNode(WFCNode):
                 
                 ltile = tile(left)
                 rtile = tile(right)
+
                 if ltile == [] or rtile == []:
                     return False
 
@@ -205,16 +231,19 @@ class TileNode(WFCNode):
             elif XH.GetValue(xneighbor, "left", "") != "":
                 left = XH.GetValue(xneighbor, "left", "")
                 right = XH.GetValue(xneighbor, "right", "")
-
+                # print("left:{0},right:{1}".format(left, right))
+                # print("tilenames:{0}".format(tilenames))
                 if not last(left) in tilenames or not last(right) in tilenames:
                     print("unknown tile {0} or {1} at line {2}".format(last(left), last(right), xneighbor._start_line_number))
                     return False
 
                 ltile = tile(left)
                 rtile = tile(right)
+                # print("ltile:{0},rtile:{1}".format(ltile, rtile))
                 if ltile == [] or rtile == []:
                     return False
 
+                # print("yReflect:{0}".format(yReflect(rtile)))
                 temp_propagator[0][index(ltile)][index(rtile)] = True
                 temp_propagator[0][index(yReflect(ltile))][index(yReflect(rtile))] = True
                 temp_propagator[0][index(xReflect(rtile))][index(xReflect(ltile))] = True
@@ -238,7 +267,7 @@ class TileNode(WFCNode):
                     return False
 
                 ttile = tile(top)
-                ntile = tile(bottom)
+                btile = tile(bottom)
 
                 if ttile == [] or btile == []:
                     return False

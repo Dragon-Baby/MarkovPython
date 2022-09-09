@@ -1,13 +1,15 @@
-from source import RuleNode
+import RuleNode
 import random as rd
 
-class ParallelNode(RuleNode):
+class ParallelNode(RuleNode.RuleNode):
     def __init__(self):
         super().__init__()
         self.new_state = []
 
     def Load(self, xelem, parent_symmetry, grid):
+        print("Now is Parallel!")
         if not super().Load(xelem, parent_symmetry, grid):
+            print("Parallel Failed!")
             return False
         self.new_state = [0] * len(grid.state)
         return True
@@ -27,10 +29,11 @@ class ParallelNode(RuleNode):
                     idi = x + dx + (y + dy) * MX + (z + dz) * MX * MY
                     if newvalue != 0xff and newvalue != self.grid.state[idi]:
                         self.newstate[idi] = newvalue
-                        self.ip.changes.aappend((x + dx, y + dy, z + dz))
+                        self.ip.changes.append((x + dx, y + dy, z + dz))
         self.match_count += 1
 
     def Go(self):
+        print("Go for Node:{0}".format(self))
         if not super().Go():
             return False
         for n in range(self.ip.first[self.ip.counter], len(self.ip.changes)):

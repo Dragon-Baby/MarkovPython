@@ -1,11 +1,11 @@
-from source import Node
-from source import XMLHelper as XH
-from source import Helper as He
+import Node
+import XMLHelper as XH
+import Helper as He
 import random as rd
 import sys
 import math
 
-class PathNode(Node):
+class PathNode(Node.Node):
     def __init__(self):
         super().__init__()
         self.start = self.finish = self.substrate = 0
@@ -29,6 +29,7 @@ class PathNode(Node):
         pass
 
     def Go(self):
+        print("Go for Node:{0}".format(self))
         frontier = [] # 边界
         start_positions = []
         generations = [-1]*len(self.grid.state)

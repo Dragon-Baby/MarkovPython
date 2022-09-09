@@ -1,17 +1,17 @@
-from source import XMLHelper as XH
-from source import WFCNode
-from source import SymmetryHelper as SH
-from source import Grid
-from source import Graphics 
-from source import Helper as He
+import XMLHelper as XH
+import WFCNode
+import SymmetryHelper as SH
+import Graphics 
+import Helper as He
 import random as rd
 
-class OverlapNode(WFCNode):
+class OverlapNode(WFCNode.WFCNode):
     def __init__(self):
         super().__init__()
         self.patterns = [[]]
 
     def Load(self, xelem, parent_symmetry, grid):
+        import Grid
         if grid.Z != 1:
             print("overlapping model currently works only for 2d")
             return False
@@ -25,7 +25,7 @@ class OverlapNode(WFCNode):
         
         periodic_input = XH.GetValue(xelem, "periodicInput", False)
 
-        self.new_grid = Grid.Load(xelem, grid.MX, grid.MY, grid.MZ)
+        self.new_grid = Grid.Grid.Load(xelem, grid.MX, grid.MY, grid.MZ)
         if self.new_grid != None:
             return False
         self.periodic = True

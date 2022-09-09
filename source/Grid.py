@@ -1,4 +1,4 @@
-from source import XMLHelper as XH
+import XMLHelper as XH
 
 class Grid():
     def __init__(self):
@@ -30,11 +30,14 @@ class Grid():
             print("no values specified")
             return None
 
+        print("gridvalues", value_str)
+
         g.C = len(value_str)
         g.values = {}
         g.waves = {}
         g.characters = [''] * g.C
         for i in range(g.C):
+            i = i
             symbol = value_str[i]
             if symbol in g.values.keys():
                 print("repeating value {0} at line {1}".format(symbol, xelem._start_line_number))
@@ -42,21 +45,21 @@ class Grid():
             else:
                 g.characters[i] = symbol
                 g.values[symbol] = i
-                g.waves[symbol] = 1 << i
+                g.waves[symbol] = (1 << i) & 0xff
 
         trans_str = XH.GetValue(xelem, "trasparent", "")
         if trans_str != "":
             g.transparent = g.Wave(trans_str)
 
         xunions = filter(lambda x : x.tag == "union", list(iter(XH.MyDescendants(xelem, ["markov", "sequence", "union"]))))
-        g.waves["*"] = (1 << g.C) - 1
+        g.waves["*"] = ((1 << g.C) - 1) & 0xff
         for xunion in xunions:
             symbol = XH.GetValue(xunion, "symbol", "")
             if symbol in g.waves.keys():
                 print("repeating union type {0} at line {1}".format(symbol, xunion._start_line_number))
                 return None
             else:
-                w = g.Wave(XH.GetValue(xunion, "value", ""))
+                w = g.Wave(XH.GetValue(xunion, "values", ""))
                 g.waves[symbol] = w
 
         g.state = [0]*MX*MY*MZ
@@ -68,7 +71,7 @@ class Grid():
     def Wave(self, values):
         sum = 0
         for k in range(len(self.values)):
-            sum += 1 << self.values[values[k]]
+            sum += (1 << self.values[values[k]])
         return sum
 
     def Clear(self):
