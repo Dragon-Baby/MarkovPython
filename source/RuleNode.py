@@ -7,84 +7,93 @@ import Search
 class RuleNode(Node.Node):
     def __init__(self):
         super().__init__()
-        self.rules = []
-        self.counter = 0
-        self.steps = 0
+        print("[RuleNode] > {0} Factory as a RuleNode".format(self))
+        self.rules = [] # list of Rule
+        self.counter = 0    # int
+        self.steps = 0  # int
 
-        self.matches = []
-        self.match_count = 0
-        self.last_matched_turn = 0
-        self.match_mask = []
+        self.matches = []   # list of (int, int, int, int)
+        self.match_count = 0    # int
+        self.last_matched_turn = 0  # int
+        self.match_mask = []    # list of list of bool
         
-        self.potentials = []
-        self.fields = []
-        self.observations = []
-        self.temperature = 0.0
+        self.potentials = []    # list of list of int
+        self.fields = []    # list of Field
+        self.observations = []  # list of Observation
+        self.temperature = 0.0  # float
 
-        self.search = False
-        self.future_computed = False
-        self.future = []
-        self.trajectory = []
+        self.search = False # bool
+        self.future_computed = False # bool
+        self.future = []    # list of int
+        # trajectory 轨迹
+        self.trajectory = []    # list of list of byte
 
-        self.limit = 0
-        self.depth_coefficient = 0.0
+        self.limit = 0  # int
+        # coefficient 系数
+        self.depth_coefficient = 0.0 # float
 
-        self.last = []
+        self.last = []  # list of bool
 
     def Load(self, xelem, parent_symmetry, grid):
-        print("Now is Rule!")
+        print("[RuleNode] > {0} Load as a RuleNode".format(self))
         import Rule
         import Field
         import Observation
+
+        self.start_line = xelem._start_line_number
         symmetry_str = XH.GetValue(xelem, "symmetry", "")
         symmetry = SH.GetSymmetry(grid.MZ==1, symmetry_str, parent_symmetry)
-        print(symmetry_str, symmetry)
         if symmetry == []:
-            print("unknown symmetry {0} at line {1}".format(symmetry_str, xelem._start_line_number))
+            print("[RuleNode] > !!! Unknown Symmetry {0} at line {1}".format(symmetry_str, xelem._start_line_number))
             return False
         
         rule_list = []
-        print("Current xelement", xelem)
         xrules = XH.Elements(xelem, ["rule"])
-        print("xrules", xrules)
         rule_elements = xrules if len(xrules) > 0 else [xelem]
-        print("rule_elements", rule_elements)
+        print("[RuleNode] > Find Some Rule Elements : {0}".format(rule_elements))
+        print("[RuleNode] > Start Loading Rules")
         for xrule in rule_elements:
-            print("Try to get the rule at line number {0}".format(xelem._start_line_number))
+            print("[RuleNode] > Load Rule at {0}".format(xrule._start_line_number))
             rule = Rule.Rule.Load(xrule, grid, grid)
             if rule == None:
+                print("[RuleNode] > !!! Failed to Load Rule at {0}".format(xrule._start_line_number))
                 return False
             rule.original = True
 
             rule_symmetry_str = XH.GetValue(xrule, "symmetry", "")
             rule_symmetry = SH.GetSymmetry(grid.MZ == 1, rule_symmetry_str, symmetry)
             if rule_symmetry == []:
-                print("unknown symmetry {0} at line {1}".format(rule_symmetry_str, xrule._start_line_number))
+                print("[RuleNode] > !!! Unknown Symmetry {0} at line {1}".format(rule_symmetry_str, xrule._start_line_number))
                 return False
+            print("[RuleNode] > Append rule by rule symmetry!")
             for r in rule.Symmetries(rule_symmetry, grid.MZ == 1):
                 rule_list.append(r)
+            print("[RuleNode] > Rules : {0}".format(rule_list))
 
         self.rules = rule_list
-        self.last = [False] * len(self.rules)
+        self.last = [False for i in range(len(self.rules))]
+
+
+        self.steps = XH.GetValue(xelem, "steps", 0)
 
         # field
-        self.steps = XH.GetValue(xelem, "temperature", 0.0)
+        self.temperature = XH.GetValue(xelem, "temperature", 0.0)
         xfields = XH.Elements(xelem, ["field"])
         if len(xfields) != 0:
-            fields = [None] * grid.C
+            fields = [None for i in range(grid.C)]
             for xfield in xfields:
                 c = XH.GetValue(xfield, "for", "")
                 if c in grid.values.keys():
                     value = grid.values[c]
                     fields[value] = Field.Field(xfield, grid)
                 else:
-                    print("unknown field value {0} at line {1}".format(c, xfield._start_line_number))
-            self.potentials = [[0]*len(grid.state)]*len(grid.C)
+                    print("[RuleNode] > !!!Unknown field value {0} at line {1}".format(c, xfield._start_line_number))
+            self.potentials = [[0 for i in range(len(grid.state))] for i in range(grid.C)]
 
         # observe
         xobservations = XH.Elements(xelem, ["observe"])
         if len(xobservations) != 0:
-            observations = [None]*grid.C
+            observations = [None for i in range(grid.C)]
             for x in xobservations:
                 value = grid.values[XH.GetValue(x, "value", "")]
                 observations[value] = Observation.Observation(XH.GetValue(x, "from", grid.characters[value]), XH.GetValue(x, "to", ""), grid)
@@ -94,8 +103,8 @@ class RuleNode(Node.Node):
                 self.limit = XH.GetValue(xelem, "limit", -1)
                 self.depth_coefficient = XH.GetValue(xelem, "depthCoefficient", 0.5)
             else:
-                self.potentials = [[0]*len(grid.state)]*len(grid.C)
-            self.future = [0]*len(grid.state)
+                self.potentials = [[0 for i in range(len(grid.state))] for i in range(grid.C)]
+            self.future = [0 for i in range(len(grid.state))]
 
         return True
 
@@ -117,21 +126,21 @@ class RuleNode(Node.Node):
             self.matches.append(match)
         self.match_count += 1
 
+
     def Go(self):
-        print("{0} Run as a RuleNode!".format(self))
         import AllNode
         import Observation
-        print("last:{0}".format(self.last))
+
         for r in range(len(self.last)):
             self.last[r] = False
+
         if self.steps > 0 and self.counter >= self.steps:
-            print("EXIT!")
             return False
+
         MX = self.grid.MX
         MY = self.grid.MY
         MZ = self.grid.MZ
         if self.observations != [] and not self.future_computed:
-            print("Observation!")
             if not Observation.Observation.ComputeFutureSetPresent(self.future, self.grid.state, self.observations):
                 return False
             else:
@@ -149,7 +158,6 @@ class RuleNode(Node.Node):
                     Observation.Observation.ComputeBackwardPotentials(self.potentials, self.future, MX, MY, MZ, self.rules)
         
         if self.last_matched_turn >= 0:
-            print("Last Match!")
             for n in range(self.ip.first[self.last_matched_turn], len(self.ip.changes)):
                 (x,y,z) = self.ip.changes[n]
                 value = self.grid.state[x + y * MX + z * MX * MY]
@@ -170,12 +178,14 @@ class RuleNode(Node.Node):
                             self.Add(r, sx, sy, sz, maskr)
 
         else:
-            print("ELSE!")
             self.match_count = 0
-            print(self.rules)
+            print("Now is here!")
             for r in range(len(self.rules)):
                 rule = self.rules[r]
-                maskr = self.match_mask[r]
+                maskr = []
+                if r < len(self.match_mask):
+                    maskr = self.match_mask[r]
+
                 for z in range(rule.IMZ - 1, MZ, rule.IMZ):
                     for y in range(rule.IMY - 1, MY, rule.IMY):
                         for x in range(rule.IMX - 1, MX, rule.IMX):

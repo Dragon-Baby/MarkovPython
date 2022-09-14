@@ -1,5 +1,5 @@
 <models>
-  <model name="ATest" size="64" steps="200"/>
+  <model name="ATest" size="40" gif="False"/>
   <!-- <model name="Backtracker" size="16"/> -->
   <!-- <model name="Basic" size="9" steps="1"/> -->
   <!-- <model name="Apartemazements" size="8" d="3" amount="4"/> -->

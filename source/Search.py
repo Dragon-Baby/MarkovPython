@@ -9,14 +9,14 @@ def Apply(rule, x, y, state, MX):
 
 
 def Applys(state, solution, MX):
-    result = [0] * len(state)
+    result = [0 for i in range(len(state))]
     result = state[:len(state)]
     for (rule, i) in solution:
         Apply(rule, int(i % MX), int(i / MX), result, MX)
     return result
 
 def Applied(rule, x, y, state, MX):
-    result = [0] * len(state)
+    result = [0 for i in range(len(state))]
     result = state
     for dz in range(rule.OMZ):
         for dy in range(rule.OMY):
@@ -103,7 +103,7 @@ def Enumerate(children, solution, tiles, amounts, mask, state, MX):
 
 def AllChildStates(state, MX, MY, rules):
     list = []
-    amounts = [0]*len(state)
+    amounts = [0 for i in range(len(state))]
     for i in range(len(state)):
         x = int(i % MX)
         y = int(i / MX)
@@ -115,7 +115,7 @@ def AllChildStates(state, MX, MY, rules):
                     for dx in range(rule.IMX):
                         amounts[x + dx + (y + dy) * MX] += 1
     tiles = list
-    mask = [True] * len(tiles)
+    mask = [True for i in range(len(tiles))]
     solution = []
     result = []
     Enumerate(result, solution, tiles, amounts, mask, state, MX)
@@ -135,8 +135,8 @@ def OneChildStates(state, MX, MY, rules):
 
 def Run(present, future, rules, MX, MY, MZ, C, all, limit, depth_coefficient, seed):
     import Observation
-    bpotentials = [[-1]*len(present)]*C
-    fpotentials = [[-1]*len(present)]*C
+    bpotentials = [[-1 for i in range(len(present))] for i in range(C)]
+    fpotentials = [[-1 for i in range(len(present))] for i in range(C)]
 
     Observation.Observation.ComputeBackwardPotentials(bpotentials, future, MX, MY, MZ, rules)
     root_backward_estimate = Observation.Observation.BackwardPointwise(bpotentials, present)
@@ -219,7 +219,7 @@ class Board():
 
     def Rank(self, random, depth_coefficient):
         result = 1000 - self.depth if depth_coefficient else self.forward_estimate + self.backward_estimate + 2.0 * depth_coefficient * self.depth
-        rd.seed(random)
+        
         return result + 0.0001 * rd.uniform(0,1)
 
     @staticmethod

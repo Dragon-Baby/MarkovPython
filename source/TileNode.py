@@ -116,7 +116,7 @@ class TileNode(WFCNode.WFCNode):
             
             localdata = SH.CubeSymmetries(flat_tile, zRotate, yRotate, xReflect, He.Same) if full_symmetry else SH.SquareSymmetries(flat_tile, zRotate, xReflect, He.Same)
 
-            position = [False] * 128
+            position = [False for i in range(128)]
             named_tile_data[tilename] = localdata
             for p in localdata:
                 self.tiledata.append(p)
@@ -134,7 +134,7 @@ class TileNode(WFCNode.WFCNode):
         for xrule in xelem.findall("./rule"):
             input = XH.GetValue(xrule, "in", "")
             outputs = XH.GetValue(xrule, "out", "").split("|")
-            position = [False] * self.P
+            position = [False for i in range(self.P)]
             for s in outputs:
                 array = []
                 if s in positions.keys():
@@ -148,9 +148,9 @@ class TileNode(WFCNode.WFCNode):
             map[grid.values[input]] = position
 
         if not 0 in map.keys():
-            map[0] = [True] * self.P
+            map[0] = [True for i in range(self.P)]
 
-        temp_propagator = [[[False] * self.P] * self.P] * 6
+        temp_propagator = [[[False for i in range(self.P)] for i in range(self.P)] for i in range(6)]
 
         def index(p):
             for i in range(len(self.tiledata)):
@@ -284,15 +284,15 @@ class TileNode(WFCNode.WFCNode):
                 temp_propagator[3][p2][p1] = temp_propagator[1][p1][p2]
                 temp_propagator[5][p2][p1] = temp_propagator[4][p1][p2]
 
-        sparse_propagator = [[[]]] * 6
+        sparse_propagator = [[[]] for i in range(6)]
         for d in range(6):
-            sparse_propagator[d] = [[]] * self.P
+            sparse_propagator[d] = [[] for i in range(self.P)]
             for t in range(self.P):
                 sparse_propagator[d][t] = []
 
-        self.propagator = [[[]]] * 6
+        self.propagator = [[[]] for i in range(6)]
         for d in range(6):
-            self.propagator[d] = [[]] * self.P
+            self.propagator[d] = [[] for i in range(self.P)]
             for p1 in range(self.P):
                 sp = sparse_propagator[d][p1]
                 tp = temp_propagator[d][p1]
@@ -302,7 +302,7 @@ class TileNode(WFCNode.WFCNode):
                         sp.append(p2)
 
                 ST = len(sp)
-                self.propagator[d][p1] = [0] * ST
+                self.propagator[d][p1] = [0 for i in range(ST)]
                 for st in range(ST):
                     self.propagator[d][p1][st] = sp[st]
 
@@ -315,7 +315,7 @@ class TileNode(WFCNode.WFCNode):
             for y in range(self.grid.MY):
                 for x in range(self.grid.MX):
                     w = self.wave.data[x + y * self.grid.MX + z * self.grid.MX * self.grid.MY]
-                    votes = [[0]*self.new_grid.C] * self.S * self.S * self.SZ
+                    votes = [[0 for i in range(self.new_grid.C)] for i in range(self.S * self.S * self.SZ)]
                     for t in range(self.P):
                         if w[t]:
                             tile = self.tiledata[t]

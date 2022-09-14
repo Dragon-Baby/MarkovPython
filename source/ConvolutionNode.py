@@ -28,7 +28,7 @@ class ConvolutionNode(Node.Node):
         xrules = XH.Elements(xelem, ["rule"])
         if len(xrules) == 0:
             xrules = [xelem]
-        self.rules = [None] * len(xrules)
+        self.rules = [None for i in range(len(xrules))]
         for k in range(len(self.rules)):
             self.rules[k] = ConvolutionRule()
             if not self.rules[k].Load(xrules[k], grid):
@@ -39,7 +39,7 @@ class ConvolutionNode(Node.Node):
         neighborhood = XH.GetValue(xelem, "neighborhood", "")
         self.kernel = self.kernels2d[neighborhood] if grid.MZ == 1 else self.kernels3d[neighborhood]
 
-        self.sumfield = [[0]*grid.C] * len(grid.state)
+        self.sumfield = [[0 for i in range(grid.C)] for i in range(len(grid.state))]
         return True
 
     def Reset(self):
@@ -113,7 +113,7 @@ class ConvolutionNode(Node.Node):
             input = self.grid.state[i]
             for r in range(len(self.rules)):
                 rule = self.rules[r]
-                rd.seed(self.ip.random)
+                
                 if input == rule.input and rule.output != self.grid.state[i] and (rule.p == 1.0 or rd.randrange(0, sys.maxsize) < rule.p * sys.maxsize):
                     success = True
                     if rule.sums != []:
@@ -164,7 +164,7 @@ class ConvolutionRule():
         if value_str != "":
             self.values = list(map(lambda c : grid.values[c], list(value_str)))
 
-            self.sums = [False] * 28
+            self.sums = [False for i in range(28)]
             intervals = sums_str.split(",")
             for s in intervals:
                 for i in interval(s):

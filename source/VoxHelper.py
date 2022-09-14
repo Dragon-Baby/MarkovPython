@@ -59,7 +59,7 @@ def LoadVox(filename):
 
                 if MX <= 0 or MY <= 0 or MY <= 0:
                     return ([], MX, MY, MZ)
-                result = [-1] * MX * MY * MZ
+                result = [-1 for i in range(MX * MY * MZ)]
                 
                 # blank
                 pos += 8

@@ -4,9 +4,11 @@ import SymmetryHelper as SH
 
 class Node():
     node_names = ["one", "all", "prl", "markov", "sequence", "path", "map", "convolution", "convchain", "wfc"]
+
     def __init__(self):
-        self.ip = None
-        self.grid = None
+        self.ip = None  # Interpreter
+        self.grid = None    # Grid
+        self.start_line = -1 
 
     def Load(self, xelem, symmetry, grid):
         return True
@@ -17,6 +19,7 @@ class Node():
     def Go(self):
         return True
 
+    # return Node
     @staticmethod
     def Factory(xelem, symmetry, ip, grid):
         import OneNode
@@ -29,11 +32,12 @@ class Node():
         import OverlapNode
         import TileNode
         if not xelem.tag in Node.node_names:
-            print("unknown node type \"{0}\" at line {1}".format(xelem.tag, xelem._start_line_number))
+            print("[Node] > Unknown Node Type \"{0}\" at line {1}".format(xelem.tag, xelem._start_line_number))
             return None
         
         result = None
         name = xelem.tag
+        print("[Node] > Node Name : [{0}] at line {1}".format(name, xelem._start_line_number))
         if name == "one":
             result = OneNode.OneNode()
         elif name == "all":
@@ -60,9 +64,10 @@ class Node():
             result = None
         result.ip = ip
         result.grid = grid
-        print(result)
+        result.start_line = xelem._start_line_number
         success = result.Load(xelem, symmetry, grid)
         if not success:
+            print("[Node] > Failed to Loading {0} at line {1}".format(result, result.start_line))
             return None
         return result
 
@@ -71,41 +76,48 @@ class Node():
 class Branch(Node):
     def __init__(self):
         super().__init__()
-        self.parent = None
-        self.nodes = []
-        self.n = 0
+        print("[Branch] > {0} Factory as a Branch".format(self))
+        self.parent = None  # Branch
+        self.nodes = [] # list of Node
+        self.n = 0  # int
 
+    # load child nodes from xml
     def Load(self, xelem, parent_symmetry, grid):
+        print("[Branch] > {0} Load as a Branch".format(self))
         symmetry_str = XH.GetValue(xelem, "symmetry", "")
         symmetry = SH.GetSymmetry(self.ip.grid.MZ==1, symmetry_str, parent_symmetry)
         if symmetry == []:
-            print("unknown symmetry {0} at line {1}".format(symmetry_str, xelem._start_line_number))
+            print("[Branch] > !!! Unknown Symmetry {0} at line {1}".format(symmetry_str, xelem._start_line_number))
             return False
         
         xchildren = XH.Elements(xelem, Node.node_names)
-        self.nodes = [None] * len(xchildren)
+        print("[Branch] > Child Elements : {0}".format(xchildren))
+        self.nodes = [None for i in range(len(xchildren))]
         import MapNode
         import WFCNode
+        print("[Branch] > Start Creating Child Nodes!")
         for c in range(len(xchildren)):
+            print("[Branch] > Factory Child Node for {0} at line {1}".format(xchildren[c], xchildren[c]._start_line_number))
             child = Node.Factory(xchildren[c], symmetry, self.ip, grid)
-            print(child)
             if child == None:
+                print("[Branch] > !!! Failed to Create Child Node {0} at line {1}".format(xchildren[c], xchildren[c]._start_line_number))
                 return False
-            if type(child) == Branch:
+            if Branch in type(child).__bases__:
                 child.parent = None if type(child) is MapNode.MapNode or (WFCNode.WFCNode in type(child).__bases__) else self
             self.nodes[c] = child
 
         return True
 
     def Go(self):
-        print("Go for Node:{0}".format(self))
         while self.n < len(self.nodes):
             node = self.nodes[self.n]
-            if type(node) is Branch:
-                self.ip.current = self.node
+            if Branch in type(node).__bases__:
+                self.ip.current = node
             if node.Go():
                 return True
             self.n += 1
+
+
         self.ip.current = self.ip.current.parent
         self.Reset()
         return False
@@ -118,6 +130,7 @@ class Branch(Node):
 
 class SequenceNode(Branch):
     def __init__(self):
+        print("[SequenceNode] > Factory a SequenceNode")
         super().__init__()
 
 class MarkovNode(Branch):
@@ -125,9 +138,8 @@ class MarkovNode(Branch):
         super().__init__()
         self.nodes = [child]
         self.ip = ip
-        self.grid = self.ip.grid
+        self.grid = ip.grid if ip != None else None
 
     def Go(self):
-        print("Go for Node:{0}".format(self))
         self.n = 0
         return super().Go()

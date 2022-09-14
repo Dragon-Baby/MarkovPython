@@ -68,7 +68,7 @@ class PathNode(Node.Node):
             return False
 
         local_random = rd.randrange(0, sys.maxsize)
-        rd.seed(rd.randrange(0, sys.maxsize))
+        
         min = MX * MY * MZ
         max = -2
 

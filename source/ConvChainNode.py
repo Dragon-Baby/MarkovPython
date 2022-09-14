@@ -31,7 +31,7 @@ class ConvChainNode(Node.Node):
         if bitmap == []:
             print("couldn't load ConvChain sample {0}".format(filename))
             return False
-        self.sample = [False] * len(bitmap)
+        self.sample = [False for i in range(len(bitmap))]
         for i in range(len(self.sample)):
             self.sample[i] = bitmap[i] == -1
 
@@ -39,8 +39,8 @@ class ConvChainNode(Node.Node):
         self.steps = XH.GetValue(xelem, "steps", -1)
         self.c0 = grid.values[XH.GetValue(xelem, "black", "")]
         self.c1 = grid.values[XH.GetValue(xelem, "white", "")]
-        self.substrate_color = [False] * len(grid.state)
-        self.weights = [0.0] * (1 << (self.N * self.N))
+        self.substrate_color = [False for i in range(len(grid.state))]
+        self.weights = [0.0 for i in range(1 << (self.N * self.N))]
         for y in range(self.SMY):
             for x in range(self.SMX):
                 pattern = He.Pattern(lambda dx, dy : self.sample[(x + dx) % self.SMX + (y + dy) % self.SMY * self.SMX], self.N)
@@ -68,7 +68,7 @@ class ConvChainNode(Node.Node):
             any_substrate = False
             for i in range(len(self.substrate)):
                 if state[i] == self.substrate_color:
-                    rd.seed(self.ip.random)
+                    
                     state[i] = self.c0 if rd.randrange(0, 2) == 0 else self.c1
                     self.substrate[i] = True
                     any_substrate = True
@@ -76,7 +76,7 @@ class ConvChainNode(Node.Node):
             return any_substrate
 
         for k in range(len(state)):
-            rd.seed(self.ip.random)
+            
             r = rd.randrange(0, len(state))
             if not self.substrate[r]:
                 continue

@@ -44,7 +44,7 @@ class WFCNode(Node.Branch):
         self.sum_of_weights = self.sum_of_weight_log_weights = self.starting_entropy = 0
 
         if self.shannon:
-            self.weight_log_weights = [0.0] * self.P
+            self.weight_log_weights = [0.0 for i in range(self.P)]
             for t in range(self.P):
                 self.weight_log_weights[t] = self.weights[t] * math.log(self.weights[t])
                 self.sum_of_weights += self.weights[t]
@@ -52,7 +52,7 @@ class WFCNode(Node.Branch):
 
             self.starting_entropy = math.log(self.sum_of_weights) - self.sum_of_weight_log_weights / self.sum_of_weights
         
-        self.distribution = [0.0] * self.P
+        self.distribution = [0.0 for i in range(self.P)]
         return super().Load(xelem, parent_symmetry, self.new_grid)
 
     def Reset(self):
@@ -81,7 +81,7 @@ class WFCNode(Node.Branch):
             goodseed = self.GoodSeed()
             if goodseed == None:
                 return False
-            rd.seed(goodseed)
+            
             self.stack_size = 0
             self.wave.CopyFrom(self.start_wave, len(self.propagator), self.shannon)
             self.firstgo = False
@@ -102,7 +102,7 @@ class WFCNode(Node.Branch):
     def GoodSeed(self):
         for k in range(self.tries):
             observation_sofar = 0
-            rd.seed(self.ip.random)
+            
             seed = rd.randrange(0, sys.maxsize)
             self.random = seed
             self.stack_size = 0
@@ -139,7 +139,7 @@ class WFCNode(Node.Branch):
                     remaining_values = self.wave.sums_of_ones[i]
                     entropy = self.wave.entropies[i] if self.shannon else remaining_values
                     if remaining_values > 1 and entropy <= min:
-                        rd.seed(random)
+                        
                         noise = 1E-6 * rd.uniform(0,1)
                         if entropy + noise < min:
                             min = entropy + noise
@@ -151,7 +151,7 @@ class WFCNode(Node.Branch):
         w = self.wave.data[node]
         for t in range(self.P):
             self.distribution[t] = self.weights[t] if w[t] else 0.0
-        rd.seed(random)
+        
         r = He.RandomWeights(self.distribution, rd.uniform(0,1))
         for t in range(self.P):
             if w[t] != (t == r):
@@ -236,14 +236,14 @@ class WFCNode(Node.Branch):
 class Wave():
     opposite = [2,3,0,1,5,4]
     def __init__(self, length, P, D, shannon):
-        self.data = [[True] * P] * length
+        self.data = [[True for i in range(P)] for i in range(length)]
         self.compatible = [[[-1]*D]*P]*length
-        self.sums_of_ones = [0] * length
+        self.sums_of_ones = [0 for i in range(length)]
         self.sums_of_weights = self.sums_of_weight_log_weights = self.entropies = []
         if shannon:
-            self.sums_of_weights = [0.0] * length
-            self.sums_of_weight_log_weights = [0.0] * length
-            self.entropies = [0.0] * length
+            self.sums_of_weights = [0.0 for i in range(length)]
+            self.sums_of_weight_log_weights = [0.0 for i in range(length)]
+            self.entropies = [0.0 for i in range(length)]
 
     def Init(self, propagator, sum_of_weights, sum_of_weight_log_weights, starting_entropy, shannon):
         P = len(self.data[0])

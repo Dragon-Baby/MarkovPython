@@ -2,17 +2,22 @@ import RuleNode
 import random as rd
 import math
 import Helper as He
-
+import logging
 
 class AllNode(RuleNode.RuleNode):
     def __init__(self):
+        print("[AllNode] > Factory a AllNode")
         super().__init__()   
 
     def Load(self, xelem, parent_symmetry, grid):
+        print("[AllNode] > Load for AllNode at line {0}!".format(self.start_line))
+        print("[AllNode] > Load as a RuleNode!")
         if not super().Load(xelem, parent_symmetry, grid):
+            print("[AllNode] > !!! Failed to Load as a AllNode !!!")
             return False
+
         self.matches = []
-        self.match_mask = [[False]*(len(grid.state))]*len(self.rules)
+        self.match_mask = [[False for i in range(len(grid.state))] for i in range(len(self.rules))]
         return True
 
     def Fit(self, r, x, y, z, new_state, MX, MY):
@@ -20,7 +25,7 @@ class AllNode(RuleNode.RuleNode):
         for dz in range(rule.OMZ):
             for dy in range(rule.OMY):
                 for dx in range(rule.OMX):
-                    value = rule.ouput[dx + dy * rule.OMX + dz * rule.OMX * rule.OMY]
+                    value = rule.output[dx + dy * rule.OMX + dz * rule.OMX * rule.OMY]
                     if value != 0xff and new_state[x + dx + (y + dy) * MX + (z + dz) * MX * MY]:
                         return
         self.last[r] = True
@@ -38,7 +43,6 @@ class AllNode(RuleNode.RuleNode):
                         self.ip.changes.append((sx,sy,sz))
 
     def Go(self):
-        print("Go for Node:{0}".format(self))
         if not super().Go():
             return False
         self.last_matched_turn = self.ip.counter
@@ -55,6 +59,8 @@ class AllNode(RuleNode.RuleNode):
 
         MX = self.grid.MX
         MY = self.grid.MY
+
+
         import Field
         if self.potentials != []:
             first_heuristic = 0
@@ -70,13 +76,15 @@ class AllNode(RuleNode.RuleNode):
                         first_heuristic_computed = True
                     u = rd.uniform(0,1)
                     list.append((m, math.pow(u, math.exp((h - first_heuristic) / self.temperature)) if self.temperature > 0 else -h + 0.001 * u))
+
+
             ordered = sorted(list, key=lambda x : -x[1])
             for k in range(len(ordered)):
                 (r,x,y,z) = self.matches[ordered[k][0]]
                 self.match_mask[r][x + y * MX + z * MX * MY] = False
                 self.Fit(r, x, y, z, self.grid.mask, MX, MY)
         else:
-            shuffle = [0]*self.match_count
+            shuffle = [0 for i in range(self.match_count)]
             He.Shuffle(shuffle, self.ip.random)
             for k in range(len(shuffle)):
                 (r,x,y,z) = self.matches[shuffle[k]]

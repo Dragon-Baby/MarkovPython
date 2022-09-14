@@ -3,19 +3,23 @@ import random as rd
 
 class ParallelNode(RuleNode.RuleNode):
     def __init__(self):
+        print("[ParallelNode] > Factory a ParallelNode")
         super().__init__()
-        self.new_state = []
+        self.new_state = [] # list of byte
 
     def Load(self, xelem, parent_symmetry, grid):
-        print("Now is Parallel!")
+        print("[ParallelNode] > Load for ParallelNode at line {0}!".format(self.start_line))
+        print("[ParallelNode] > Load as a RuleNode!")
         if not super().Load(xelem, parent_symmetry, grid):
-            print("Parallel Failed!")
+            print("[ParallelNode] > !!! Failed to Load as a ParallelNode !!!")
             return False
-        self.new_state = [0] * len(grid.state)
+        self.new_state = [0 for i in range(len(grid.state))]
+        self.line_number = xelem._start_line_number
         return True
 
     def Add(self, r, x, y, z, maskr):
         rule = self.rules[r]
+        
         if rd.uniform(0,1) > rule.p:
             return
         self.last[r] = True
@@ -28,12 +32,11 @@ class ParallelNode(RuleNode.RuleNode):
                     newvalue = rule.output[dx + dy * rule.OMX + dz * rule.OMX * rule.OMY]
                     idi = x + dx + (y + dy) * MX + (z + dz) * MX * MY
                     if newvalue != 0xff and newvalue != self.grid.state[idi]:
-                        self.newstate[idi] = newvalue
+                        self.new_state[idi] = newvalue
                         self.ip.changes.append((x + dx, y + dy, z + dz))
         self.match_count += 1
 
     def Go(self):
-        print("Go for Node:{0}".format(self))
         if not super().Go():
             return False
         for n in range(self.ip.first[self.ip.counter], len(self.ip.changes)):

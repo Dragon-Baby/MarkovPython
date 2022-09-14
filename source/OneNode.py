@@ -5,47 +5,52 @@ import RuleNode
 
 class OneNode(RuleNode.RuleNode):
     def __init__(self):
+        print("[OneNode] > Factory a OneNode")
         super().__init__()
 
+
     def Load(self, xelem, parent_symmetry, grid):
+        print("[OneNode] > Load for OneNode at line {0}!".format(self.start_line))
+        print("[OneNode] > Load as a RuleNode!")
         if not super().Load(xelem, parent_symmetry, grid):
-            print("failed to load as rule node!")
+            print("[OneNode] > !!! Failed to Load as a OneNode !!!")
             return False
         self.matches = []
-        self.match_mask = [[False]*len(grid.state)]*len(self.rules)
-        print("successed to load as one node!")
+        self.match_mask = [[False for i in range(len(grid.state))] for i in range(len(self.rules))]
         return True
+
 
     def Reset(self):
         super().Reset()
         if self.match_count != 0:
             for mm in self.match_mask:
-                for m in mm:
-                    m = False
+                mm = [False for i in range(len(mm))]
             self.match_count = 0
+
 
     def Apply(self, rule, x, y, z):
         MX = self.grid.MX
         MY = self.grid.MY
         changes = self.ip.changes
+
         for dz in range(rule.OMZ):
             for dy in range(rule.OMY):
                 for dx in range(rule.OMX):
+                    # byte
                     new_value = rule.output[dx + dy * rule.OMX + dz * rule.OMX * rule.OMY]
                     if new_value != 0xff:
                         sx = x + dx
                         sy = y + dy
                         sz = z + dz
                         si = sx + sy * MX + sz * MX * MY
+                        # byte
                         old_value = self.grid.state[si]
                         if new_value != old_value:
                             self.grid.state[si] = new_value
                             changes.append((sx,sy,sz))
     
     def Go(self):
-        print("Go for Node:{0}".format(self))
         if not super().Go():
-            print("Failed to Go as a Rule node!")
             return False
         self.last_matched_turn = self.ip.counter
 
@@ -58,29 +63,29 @@ class OneNode(RuleNode.RuleNode):
         
         R, X, Y, Z = self.RandomMatch(self.ip.random)
         if R < 0:
-            print("Failed！")
             return False
         else:
             self.last[R] = True
             self.Apply(self.rules[R], X, Y, Z)
             self.counter += 1
-            print("Worked!")
             return True
 
+    # return int, int, int, int 
     def RandomMatch(self, random):
-        print("Start RandomMatch!")
         import Observation
         import Field
+
         if self.potentials != []:
-            print("There're exist potential!")
             if self.observations != [] and Observation.Observation.IsGoalReached(self.grid.state, self.future):
                 self.future_computed = False
                 return (-1,-1,-1,-1)
+
             max = -1000.0
             argmax = -1
             # heuristic 探索
             first_heuristic = 0.0
             first_heuristic_computed = False
+
             k = 0
             while k < self.match_count:
                 (r,x,y,z) = self.matches[k]
@@ -98,6 +103,7 @@ class OneNode(RuleNode.RuleNode):
                     if not first_heuristic_computed:
                         first_heuristic = h
                         first_heuristic_computed = True
+                    
                     u = rd.uniform(0,1)
                     key = math.pow(u, math.exp((h - first_heuristic) / self.temperature)) if self.temperature > 0 else -h + 0.001 * u
                     if key > max:
@@ -106,9 +112,8 @@ class OneNode(RuleNode.RuleNode):
                 k += 1
             return self.matches[argmax] if argmax >= 0 else (-1,-1,-1,-1)
         else:
-            print("match_count:{0}".format(self.match_count))
+            
             while self.match_count > 0:
-                rd.seed(self.ip.random)
                 match_index = rd.randrange(0, self.match_count)
                 (r, x, y, z) = self.matches[match_index]
                 i = x + y * self.grid.MX + z * self.grid.MX * self.grid.MY

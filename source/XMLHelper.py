@@ -38,15 +38,8 @@ def GetValue(xelem, name, default):
     return value
 
 def Elements(xelem, tags):
-    # print("Now is here!", xelem, "".join(["./{}|"]*len(tags)).format(*tags).rstrip("|"))
-    print("Try to get child elements!")
     children = xelem.findall("./*")
-    # print(children)
     children = list(filter(lambda e : e.tag in tags, list(children)))
-    # for child in children:
-    #     if child.tag not in tags:
-    #         children.remove(child)
-    print("parents {0}:\n children {1}".format(xelem._start_line_number, list(map(lambda x : x._start_line_number, children))))
     return children
 
 

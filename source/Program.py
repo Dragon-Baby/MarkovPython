@@ -7,9 +7,7 @@ import Interpreter
 
 def main():
     src_folder = "{0}".format(os.path.dirname(os.path.abspath(__file__)).rstrip("\source"))
-    # src_folder = "{0}".format(os.path.dirname(hou.hipFile.path()))
-    print(src_folder)
-
+    # print(src_folder)
     # create output folder
     folder = os.path.join(src_folder, "output")
     if not os.path.exists(folder):
@@ -24,11 +22,8 @@ def main():
     palette = {}
     for e in palette_xml.getroot().findall("./color"):
         symbol = XH.GetValue(e, "symbol", "")
-        # print(symbol)
         value = int(XH.GetValue(e, "value", ""), 16)
         palette[symbol] = value
-
-    # print(palette)
 
     # model 
     xdoc = ET.parse("{0}/models.xml".format(src_folder), parser=XH.LineNumberingParser())
@@ -40,24 +35,20 @@ def main():
         MY = XH.GetValue(xmodel, "width", linear_size)
         MZ = XH.GetValue(xmodel, "height", 1 if dimension == 2 else linear_size)
 
-        print("{0} > ".format(name))
+        # print("{0} > ".format(name))
         file_name = "{0}/models/{1}.xml".format(src_folder, name)
-        print(file_name)
+        # print(file_name)
         model_doc = None
         model_doc = ET.parse(file_name, parser=XH.LineNumberingParser())
-        # try:
-        #     model_doc = ET.parse(file_name, parser=XH.LineNumberingParser())
-        # except:
-        #     print("ERROR: couldn't open xml file {0}".format(file_name))
-        #     continue
-        print(model_doc, MX, MY, MZ)
 
+        print("[Interpreter] > Start Loading Interpreter!")
         # model interpreter
         interpreter = Interpreter.Interpreter.Load(model_doc.getroot(), MX, MY, MZ)
         if interpreter == None:
-            print("ERROR Oops")
+            print("[Interpreter] > !!! ERROR, Failed to Load Model {0}!!!".format(file_name))
             continue
 
+        print("[Interpreter] > Finished !")
         amount = XH.GetValue(xmodel, "amount", 1)
         pixel_size = XH.GetValue(xmodel, "pixelsize", 4)
         seed_str = XH.GetValue(xmodel, "seeds", "")
@@ -73,35 +64,12 @@ def main():
         for x in xmodel.findall("./color"):
             custom_palette[XH.GetValue(x, "symbol", "")] = int(XH.GetValue(x, "value", ""), 16) + 255 << 24
 
-        # print(custom_palette)
-
-        # import hou
-
-        # node = hou.pwd()
-        # geo = node.geometry()
         for k in range(amount):
             seed = seeds[k] if seeds != [] and k < len(seeds) else rd.randrange(0, sys.maxsize)
-            # interpreter run
             for result, legend, FX, FY, FZ in iter(interpreter.Run(seed, steps, gif)):
                 colors = list(map(lambda x : custom_palette[x], legend))
-                print(colors)
-                print(result)
-                # pt = geo.createPoint()
-                # pt.setAttribValue("state", result)
-                # pt.setAttribValue("colors", colors)
-                # pt.setAttribValue("FX", FX)
-                # pt.setAttribValue("FY", FY)
-                # pt.setAttribValue("FZ", FZ)
-                # pt.setAttribValue("pixelSize", pixel_size)
-                # output_name = "output/{0}".format(interpreter.counter) if gif else "output/{0}_{1}".format(name, seed)
                 #### Render in Houdini
-                if FZ == 1 or iso:
-                    # draw pic or vox
-                    pass
-                else:
-                    # save vox
-                    pass
-                yield (result, legend, FX, FY, FZ, pixel_size)
+                yield (result, legend, FX, FY, FZ, pixel_size, gif)
             print("DONE")
 
 

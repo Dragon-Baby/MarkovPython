@@ -49,7 +49,7 @@ class Sprite():
         self.height = 2 * size - 1
 
         def texture(f):
-            result = [0] * self.width * self.height
+            result = [0 for i in range(self.width * self.height)]
             for j in range(self.height):
                 for i in range(self.width):
                     result[i + j * self.width] = f(i - size + 1, size - j - 1)
@@ -66,7 +66,7 @@ class Sprite():
                 return Sprite.c1
 
         self.cube = texture(f)
-        self.edges = [[]] * 8
+        self.edges = [[] for i in range(8)]
         self.edges[0] = texture(lambda x, y : Sprite.c1 if x == 1 and y <= 0 else Sprite.transparent)
         self.edges[1] = texture(lambda x, y : Sprite.c1 if x == 0 and y <= 0 else Sprite.transparent)
         self.edges[2] = texture(lambda x, y : Sprite.black if x == 1 - size and 2 * y < size and 2 * y >= -size else Sprite.transparent)
@@ -85,4 +85,4 @@ class Voxel():
         self.x = x
         self.y = y
         self.z = z
-        self.edges = [False] * 8
+        self.edges = [False for i in range(8)]

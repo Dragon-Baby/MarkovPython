@@ -2,21 +2,23 @@ import XMLHelper as XH
 
 class Grid():
     def __init__(self):
-        self.state = []
-        self.mask = []
-        self.MX = 0
-        self.MY = 0
-        self.MZ = 0
+        self.state = [] # list of byte(int)
+        self.mask = []  # list of bool
+        self.MX = 0 # int
+        self.MY = 0 # int
+        self.MZ = 0 # int
 
-        self.C = 0
-        self.characters = []
-        self.values = {}
-        self.waves = {}
-        self.folder = ""
+        self.C = 0  # byte(int)
+        self.characters = []    # list of str
+        self.values = {}    # dict of <str, byte>
+        self.waves = {} # dict of <str, int>
+        self.folder = ""    # str
 
-        self.transparent = 0
-        self.statebuffer = []
+        self.transparent = 0    # int
+        self.statebuffer = []   # list of byte
 
+
+    # return Grid
     @staticmethod
     def Load(xelem, MX, MY, MZ):
         g = Grid()
@@ -27,50 +29,52 @@ class Grid():
         if value_str != "":
             value_str = value_str.replace(" ", "")
         if value_str == "":
-            print("no values specified")
+            print("[Grid] > !!! No Values Specified !!!")
             return None
 
-        print("gridvalues", value_str)
 
-        g.C = len(value_str)
+        g.C = len(value_str) & 0xff
         g.values = {}
         g.waves = {}
-        g.characters = [''] * g.C
+        g.characters = ['' for i in range(g.C)]
         for i in range(g.C):
             i = i
             symbol = value_str[i]
             if symbol in g.values.keys():
-                print("repeating value {0} at line {1}".format(symbol, xelem._start_line_number))
+                print("[Grid] > Repeating Value {0} at line {1}".format(symbol, xelem._start_line_number))
                 return None
             else:
                 g.characters[i] = symbol
                 g.values[symbol] = i
-                g.waves[symbol] = (1 << i) & 0xff
+                g.waves[symbol] = (1 << i)
 
         trans_str = XH.GetValue(xelem, "trasparent", "")
         if trans_str != "":
             g.transparent = g.Wave(trans_str)
 
-        xunions = filter(lambda x : x.tag == "union", list(iter(XH.MyDescendants(xelem, ["markov", "sequence", "union"]))))
-        g.waves["*"] = ((1 << g.C) - 1) & 0xff
+        xunions = list(filter(lambda x : x.tag == "union", list(iter(XH.MyDescendants(xelem, ["markov", "sequence", "union"])))))
+        g.waves["*"] = ((1 << g.C) - 1)
         for xunion in xunions:
             symbol = XH.GetValue(xunion, "symbol", "")
             if symbol in g.waves.keys():
-                print("repeating union type {0} at line {1}".format(symbol, xunion._start_line_number))
+                print("[Grid] > !!! Repeating Union Type {0} at line {1}".format(symbol, xunion._start_line_number))
                 return None
             else:
                 w = g.Wave(XH.GetValue(xunion, "values", ""))
                 g.waves[symbol] = w
 
-        g.state = [0]*MX*MY*MZ
-        g.statebuffer = [0]*MX*MY*MZ
-        g.mask = [True]*MX*MY*MZ
+        g.state = [0 for i in range(MX*MY*MZ)]
+        g.statebuffer = [0 for i in range(MX*MY*MZ)]
+        g.mask = [True for i in range(MX*MY*MZ)]
         g.folder = XH.GetValue(xelem, "folder", "")
+
+        print("[Grid] > Values : {0}".format(g.values))
+        print("[Grid] > Waves : {0}".format(g.waves))
         return g
 
     def Wave(self, values):
         sum = 0
-        for k in range(len(self.values)):
+        for k in range(len(values)):
             sum += (1 << self.values[values[k]])
         return sum
 

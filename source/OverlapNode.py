@@ -45,7 +45,7 @@ class OverlapNode(WFCNode.WFCNode):
             # residue 残余
             residue = ind
             power = W
-            result = [0] * self.N * self.N
+            result = [0 for i in range(self.N * self.N)]
             for i in range(len(result)):
                 power /= C
                 count = 0
@@ -75,8 +75,8 @@ class OverlapNode(WFCNode.WFCNode):
         self.P = len(weights)
         print("number of patterns P = {0}".format(self.P))
 
-        self.patterns = [[]] * self.P
-        super().weights = [0.0] * self.P
+        self.patterns = [[] for i in range(self.P)]
+        super().weights = [0.0 for i in range(self.P)]
         counter = 0
         for w in ordering:
             self.patterns[counter] = patternFromIndex(w)
@@ -96,13 +96,13 @@ class OverlapNode(WFCNode.WFCNode):
 
         self.propagator = [[[]]]*4
         for d in range(4):
-            self.propagator[d] = [[]] * self.P
+            self.propagator[d] = [[] for i in range(self.P)]
             for t in range(self.P):
                 list = []
                 for t2 in range(self.P):
                     if agrees(self.patterns[t], self.patterns[t2], self.DX[d], self.DY[d]):
                         list.append(t2)
-                self.propagator[d][t] = [0] * len(list)
+                self.propagator[d][t] = [0 for i in range(len(list))]
                 for c in range(len(list)):
                     self.propagator[d][t][c] = list[c]
 
@@ -114,7 +114,7 @@ class OverlapNode(WFCNode.WFCNode):
             map[grid.values[input]] = position
         
         if not 0 in map.keys():
-            map[0] = [True] * self.P
+            map[0] = [True for i in range(self.P)]
 
         return super().Load(xelem, parent_symmetry, grid)
 
@@ -122,7 +122,7 @@ class OverlapNode(WFCNode.WFCNode):
     def UpdateState(self):
         MX = self.new_grid.MX
         MY = self.new_grid.MY
-        votes = [[0]*self.new_grid.C] * len(self.new_grid.state)
+        votes = [[0 for i in range(self.new_grid.C)] for i in range(len(self.new_grid.state))]
         for i in range(len(self.wave.data)):
             w = self.wave.data[i]
             x = int(i % MX)

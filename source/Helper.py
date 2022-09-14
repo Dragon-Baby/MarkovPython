@@ -10,7 +10,7 @@ def Split(s, s1, s2):
 
 def Shuffle(array, random):
     for i in range(len(array)):
-        j = rd.ranint(0, i + 1)
+        j = rd.randrange(0, i + 1)
         array[i] = array[j]
         array[j] = i
 
@@ -24,7 +24,6 @@ def MaxPositiveIndex(amounts):
     return argmax
 
 def RandomList(list, random):
-    rd.seed(random)
     return list[rd.randrange(0, len(list))]   
 
 def RandomWeights(weights, r):
@@ -40,7 +39,7 @@ def RandomWeights(weights, r):
     return 0
 
 def Pattern(f, N):
-    result = [None] * N * N
+    result = [None for i in range(N * N)]
     for y in range(N):
         for x in range(N):
             result[x + y *N] = f(x, y)
@@ -71,7 +70,7 @@ def IndexByteArray(p, C):
 
 
 def Ords(data, uniques = []):
-    result = [0] * len(data)
+    result = [0 for i in range(len(data))]
     if uniques == []:
         uniques = []
     for i in range(len(data)):

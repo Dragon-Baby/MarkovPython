@@ -13,7 +13,7 @@ cubeSubgroups = {
     "(z)" : list(map(lambda x : x == 0 or x == 17, list(range(48)))),
     "(xy)" : list(map(lambda x : x < 8, list(range(48)))),
     "(xyz+)" : list(map(lambda x : x % 2 == 0, list(range(48)))),
-    "(xyz)" : [True] * 48
+    "(xyz)" : [True for i in range(48)]
 }
 
 def GetSymmetry(d2, s, dflt):
@@ -37,7 +37,7 @@ def GetSymmetry(d2, s, dflt):
         return []
 
 def SquareSymmetries(thing, rotation, reflection, same, subgroup=[]):
-    things = [None] * 8
+    things = [None for i in range(8)]
     things[0] = thing
     things[1] = reflection(things[0])  # b
     things[2] = rotation(things[0])    # a
@@ -55,7 +55,7 @@ def SquareSymmetries(thing, rotation, reflection, same, subgroup=[]):
     return result
 
 def CubeSymmetries(thing, a, b, r, same, subgroup=[]):
-    s = [None] * 48
+    s = [None for i in range(48)]
     s[0] = thing
     s[1] = r(s[0])
     s[2] = a(s[0])      # a

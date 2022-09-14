@@ -5,7 +5,7 @@ class Observation():
 
     @staticmethod
     def ComputeFutureSetPresent(future, state, observations):
-        mask = [False] * len(observations)
+        mask = [False for i in range(len(observations))]
         for k in range(len(observations)):
             if observations[k] == None:
                 mask[k] = True
@@ -50,7 +50,7 @@ class Observation():
             for i in range(len(potential)):
                 if potential[i] == 0:
                     queue.append((c, i % MX, (i % (MX * MY)) / MX, i / (MX * MY)))
-        match_mask = [[False]*len(potentials[0])] * len(rules)
+        match_mask = [[False for i in range(len(potentials[0]))] for i in range(len(rules))]
 
         while len(queue) != 0:
             (value, x, y, z) = queue.pop(0)
